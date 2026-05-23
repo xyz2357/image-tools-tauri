@@ -1,0 +1,50 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+dist-ssr
+build
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Env / secrets
+*.local
+.env*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary / test artifacts
+*.mp4
+*.jpg
+*.png
+!src-tauri/icons/**
+!src/assets/**
+
+# Legacy Python files
+ui/
+experimental/
+__pycache__/
+*.pyc
+
+# Claude Code
+.claude/
