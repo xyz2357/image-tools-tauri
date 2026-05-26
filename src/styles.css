@@ -707,3 +707,199 @@ body {
 .conv-info-grid .info-value {
   color: #cdd6f4;
 }
+
+/* ── Unified top toolbar (B1+ design) ──────────────────── */
+
+.top-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #1e1e2e;
+  border-bottom: 1px solid #313244;
+  flex-shrink: 0;
+}
+
+.top-toolbar button {
+  background: #313244;
+  color: #cdd6f4;
+  border: 1px solid #45475a;
+  border-radius: 5px;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.top-toolbar button:hover:not(:disabled) {
+  background: #45475a;
+}
+
+.top-toolbar button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.top-toolbar .top-filename {
+  color: #a6adc8;
+  font-size: 13px;
+  margin: 0 12px;
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-toolbar .top-spacer { flex: 1; }
+
+.seg {
+  display: inline-flex;
+}
+
+.seg button {
+  border-radius: 0;
+  border-right: 0;
+}
+
+.seg button:first-child {
+  border-radius: 5px 0 0 5px;
+}
+
+.seg button:last-child {
+  border-radius: 0 5px 5px 0;
+  border-right: 1px solid #45475a;
+}
+
+.seg button.active {
+  background: #89b4fa;
+  color: #11111b;
+  border-color: #89b4fa;
+}
+
+/* ── Pill bar (right panel top, both tabs) ─────────────── */
+
+.pill-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 10px;
+  border-bottom: 1px solid #313244;
+  flex-shrink: 0;
+}
+
+.pill-btn {
+  background: #313244;
+  color: #cdd6f4;
+  border: 1px solid #45475a;
+  border-radius: 4px;
+  padding: 8px 6px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.pill-btn:hover:not(:disabled) {
+  background: #45475a;
+}
+
+.pill-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pill-btn.active {
+  background: #89b4fa;
+  color: #11111b;
+  border-color: #89b4fa;
+}
+
+.pill-btn .icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.pill-btn.pill-output {
+  grid-column: span 2;
+  border-style: dashed;
+}
+
+/* Apply row at bottom of each tool pane */
+.apply-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.apply-row .btn-apply {
+  flex: 1;
+  margin-top: 0;
+}
+
+.apply-row .btn-apply.secondary {
+  background: #313244;
+  color: #cdd6f4;
+  border: 1px solid #45475a;
+  font-weight: 400;
+}
+
+.apply-row .btn-apply.secondary:hover:not(:disabled) {
+  background: #45475a;
+}
+
+/* Conv tool-content panes (mirrors .tool-content but for conv) */
+.conv-tool-content {
+  display: none;
+  padding: 16px;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.conv-tool-content.active {
+  display: flex;
+}
+
+.conv-tool-content .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.conv-tool-content .field label {
+  color: #a6adc8;
+  font-size: 12px;
+}
+
+.conv-tool-content input[type="range"] { width: 100%; accent-color: #89b4fa; }
+
+.conv-tool-content input[type="text"],
+.conv-tool-content input[type="number"],
+.conv-tool-content select {
+  background: #313244;
+  border: 1px solid #45475a;
+  color: #cdd6f4;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+
+.conv-tool-content select { cursor: pointer; }
+
+/* Image-tools save pane (re-uses .tool-content) — quality field visibility */
+#tool-save .field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* Toolbar button visibility by active tab.
+   - Selection-mode toggle and Redo: image only
+   - Everything else (Open, Undo, Reset, filename): both */
+body.tab-video #sel-mode-group { display: none; }
+body.tab-video #btn-redo { display: none; }
+
+

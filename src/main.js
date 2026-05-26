@@ -119,6 +119,7 @@ fileInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
   state.sourceFileName = file.name;
+  updateTopFilename();
   const img = new Image();
   img.onload = () => {
     state.image = img;
@@ -171,6 +172,7 @@ canvasScroll.addEventListener("drop", (e) => {
   const file = e.dataTransfer.files[0];
   if (!file || !file.type.startsWith("image/")) return;
   state.sourceFileName = file.name;
+  updateTopFilename();
   const img = new Image();
   img.onload = () => {
     state.image = img;
@@ -245,10 +247,31 @@ document.addEventListener("mouseup", () => {
   state.isSelecting = false;
 });
 
+function setSelectionMode(mode) {
+  state.selectionMode = mode;
+  $("#btn-sel-rect").classList.toggle("active", mode === "RECT");
+  $("#btn-sel-lasso").classList.toggle("active", mode === "LASSO");
+}
+
 function toggleSelectionMode() {
-  state.selectionMode = state.selectionMode === "RECT" ? "LASSO" : "RECT";
-  const label = state.selectionMode === "RECT" ? "矩形" : "套索";
-  $("#btn-toggle-mode").textContent = `选区: ${label} (Tab)`;
+  setSelectionMode(state.selectionMode === "RECT" ? "LASSO" : "RECT");
+}
+
+function resetImage() {
+  // Revert to the originally loaded image — discards every effect / text
+  // layer. History is also wiped because the previous-state snapshots
+  // refer to a now-replaced image.
+  if (!state.image) return;
+  state.history = [];
+  state.redoHistory = [];
+  state.selectionPoly = [];
+  drawImage(state.image);
+}
+
+function updateTopFilename() {
+  const el = document.getElementById("top-filename");
+  if (!el) return;
+  el.textContent = state.sourceFileName || "未加载文件";
 }
 
 // ── Selection mask helper ───────────────────────────────────────────────────
@@ -610,15 +633,43 @@ document.addEventListener("keydown", (e) => {
 // ── Init ────────────────────────────────────────────────────────────────────
 
 window.addEventListener("DOMContentLoaded", () => {
+  // Primary tabs: also toggles a body class so the toolbar can show/hide
+  // tab-specific buttons (selection-mode, redo for image only; rest shared).
+  document.body.classList.add("tab-image");
+  const primaryBar = $(".primary-tabs");
+  primaryBar.addEventListener("click", (e) => {
+    const btn = e.target.closest(".tab-btn");
+    if (!btn) return;
+    document.body.classList.toggle("tab-image", btn.dataset.tab === "image-tools");
+    document.body.classList.toggle("tab-video", btn.dataset.tab === "conversion");
+  });
   initTabs(".primary-tabs", "tab-");
-  initTabs(".tool-tabs", "tool-");
+  initTabs("#img-pill-bar", "tool-");
 
-  // Buttons
-  $("#btn-open").addEventListener("click", openImage);
-  $("#btn-save").addEventListener("click", saveImage);
-  $("#btn-undo").addEventListener("click", undo);
+  // Toolbar buttons — these dispatch to whichever tab is active.
+  $("#btn-open").addEventListener("click", () => {
+    if (document.body.classList.contains("tab-image")) openImage();
+    else if (window.__convOpenFile) window.__convOpenFile();
+  });
+  $("#btn-undo").addEventListener("click", () => {
+    if (document.body.classList.contains("tab-image")) undo();
+    else if (window.__convUndo) window.__convUndo();
+  });
   $("#btn-redo").addEventListener("click", redo);
-  $("#btn-toggle-mode").addEventListener("click", toggleSelectionMode);
+  $("#btn-reset").addEventListener("click", () => {
+    if (document.body.classList.contains("tab-image")) resetImage();
+    else if (window.__convReset) window.__convReset();
+  });
+  $("#btn-sel-rect").addEventListener("click", () => setSelectionMode("RECT"));
+  $("#btn-sel-lasso").addEventListener("click", () => setSelectionMode("LASSO"));
+
+  // Save (in image-tools "保存到" pane) + format/quality controls
+  $("#btn-save").addEventListener("click", saveImage);
+  $("#save-format").addEventListener("change", (e) => {
+    $("#save-quality-field").style.display = e.target.value === "jpg" ? "" : "none";
+  });
+  bindSlider("#save-quality", "#save-quality-val");
+
   $("#btn-apply-mosaic").addEventListener("click", applyMosaic);
   $("#btn-apply-text").addEventListener("click", addTextLayer);
   $("#btn-apply-blur").addEventListener("click", applyBlur);
@@ -651,5 +702,8 @@ window.addEventListener("DOMContentLoaded", () => {
   resizeCanvases(0, 0);
 
   // Conversion tab
-  initConversion();
+  const convApi = initConversion();
+  window.__convUndo = convApi.undo;
+  window.__convReset = convApi.resetEffects;
+  window.__convOpenFile = convApi.openFile;
 });

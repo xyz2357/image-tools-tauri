@@ -55,8 +55,8 @@ describe("primary tabs", () => {
   it("has Image Tools and Conversion tabs", () => {
     const tabs = document.querySelectorAll(".primary-tabs .tab-btn");
     expect(tabs.length).toBe(2);
-    expect(tabs[0].textContent).toBe("图片工具");
-    expect(tabs[1].textContent).toBe("格式转换");
+    expect(tabs[0].textContent).toContain("图片工具");
+    expect(tabs[1].textContent).toContain("格式转换");
   });
 
   it("Image Tools tab is active by default", () => {
@@ -70,25 +70,22 @@ describe("primary tabs", () => {
   });
 });
 
-// ── Tool tabs (mirrors test_image_tools_widgets) ────────────────────────────
+// ── Tool pills (image-tools right panel) ────────────────────────────────────
 
-describe("tool tabs", () => {
+describe("image-tools tool pills", () => {
   beforeEach(setup);
   afterEach(teardown);
 
-  it("has all four tool tabs", () => {
-    const tabs = document.querySelectorAll(".tool-tabs .tab-btn");
-    expect(tabs.length).toBe(4);
-    const labels = Array.from(tabs).map((t) => t.textContent);
-    expect(labels).toContain("添加马赛克");
-    expect(labels).toContain("添加文字");
-    expect(labels).toContain("添加模糊");
-    expect(labels).toContain("相机效果");
+  it("has 5 tool pills (4 effects + save)", () => {
+    const pills = document.querySelectorAll("#img-pill-bar .pill-btn");
+    expect(pills.length).toBe(5);
+    const tools = Array.from(pills).map((p) => p.dataset.tool);
+    expect(tools).toEqual(["mosaic", "text", "blur", "camera", "save"]);
   });
 
-  it("mosaic tab is active by default", () => {
-    const activeTab = document.querySelector(".tool-tabs .tab-btn.active");
-    expect(activeTab.dataset.tool).toBe("mosaic");
+  it("mosaic pill is active by default", () => {
+    const active = document.querySelector("#img-pill-bar .pill-btn.active");
+    expect(active.dataset.tool).toBe("mosaic");
   });
 
   it("mosaic tool content is visible by default", () => {
@@ -96,6 +93,7 @@ describe("tool tabs", () => {
     expect(document.getElementById("tool-text").classList.contains("active")).toBe(false);
     expect(document.getElementById("tool-blur").classList.contains("active")).toBe(false);
     expect(document.getElementById("tool-camera").classList.contains("active")).toBe(false);
+    expect(document.getElementById("tool-save").classList.contains("active")).toBe(false);
   });
 });
 
@@ -106,9 +104,9 @@ function initTabs(doc, barSelector, contentPrefix) {
   const bar = doc.querySelector(barSelector);
   if (!bar) return;
   bar.addEventListener("click", (e) => {
-    const btn = e.target.closest(".tab-btn");
+    const btn = e.target.closest(".tab-btn, .pill-btn");
     if (!btn) return;
-    bar.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+    bar.querySelectorAll(".tab-btn, .pill-btn").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
     const key = btn.dataset.tab || btn.dataset.tool;
     const parent = bar.parentElement;
@@ -122,7 +120,7 @@ describe("tab switching", () => {
   beforeEach(() => {
     setup();
     initTabs(document, ".primary-tabs", "tab-");
-    initTabs(document, ".tool-tabs", "tool-");
+    initTabs(document, "#img-pill-bar", "tool-");
   });
   afterEach(teardown);
 
@@ -135,8 +133,8 @@ describe("tab switching", () => {
     expect(document.getElementById("tab-image-tools").classList.contains("active")).toBe(false);
   });
 
-  it("switching tool tab updates active content", () => {
-    const textBtn = document.querySelector('.tool-tabs .tab-btn[data-tool="text"]');
+  it("switching tool pill updates active content", () => {
+    const textBtn = document.querySelector('#img-pill-bar .pill-btn[data-tool="text"]');
     textBtn.click();
 
     expect(textBtn.classList.contains("active")).toBe(true);
@@ -156,7 +154,9 @@ describe("image control buttons", () => {
     "btn-save",
     "btn-undo",
     "btn-redo",
-    "btn-toggle-mode",
+    "btn-reset",
+    "btn-sel-rect",
+    "btn-sel-lasso",
   ];
 
   for (const id of buttonIds) {
@@ -281,13 +281,13 @@ describe("camera controls", () => {
 
 // ── Selection mode toggle (mirrors test_shortcuts_work partially) ───────────
 
-describe("selection mode button", () => {
+describe("selection mode buttons", () => {
   beforeEach(setup);
   afterEach(teardown);
 
-  it("shows RECT by default", () => {
-    const btn = document.getElementById("btn-toggle-mode");
-    expect(btn.textContent).toContain("矩形");
+  it("rect button is active by default", () => {
+    expect(document.getElementById("btn-sel-rect").classList.contains("active")).toBe(true);
+    expect(document.getElementById("btn-sel-lasso").classList.contains("active")).toBe(false);
   });
 });
 
@@ -305,12 +305,12 @@ describe("undo/redo buttons", () => {
     expect(document.getElementById("btn-redo")).not.toBeNull();
   });
 
-  it("undo button text contains Ctrl+Z", () => {
-    expect(document.getElementById("btn-undo").textContent).toContain("Ctrl+Z");
+  it("undo button title contains Ctrl+Z", () => {
+    expect(document.getElementById("btn-undo").title).toContain("Ctrl+Z");
   });
 
-  it("redo button text contains Ctrl+Shift+Z", () => {
-    expect(document.getElementById("btn-redo").textContent).toContain("Ctrl+Shift+Z");
+  it("redo button title contains Ctrl+Shift+Z", () => {
+    expect(document.getElementById("btn-redo").title).toContain("Ctrl+Shift+Z");
   });
 
   it("undo button shows Chinese label", () => {

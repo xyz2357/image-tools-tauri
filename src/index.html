@@ -9,9 +9,23 @@
 </head>
 <body>
   <div class="app">
+    <!-- Top toolbar shared by both tabs -->
+    <div class="top-toolbar">
+      <button id="btn-open" title="打开 (Ctrl+O)">📂 打开</button>
+      <span class="top-filename" id="top-filename">未加载文件</span>
+      <span class="top-spacer"></span>
+      <div class="seg" id="sel-mode-group">
+        <button class="active" id="btn-sel-rect" title="矩形选区 (Tab)">▭ 矩形</button>
+        <button id="btn-sel-lasso" title="套索选区 (Tab)">⌒ 套索</button>
+      </div>
+      <button id="btn-undo" title="撤销 (Ctrl+Z)">↶ 撤销</button>
+      <button id="btn-redo" title="重做 (Ctrl+Shift+Z)">↷ 重做</button>
+      <button id="btn-reset" title="重置所有效果">⟲ 重置</button>
+    </div>
+
     <div class="tab-bar primary-tabs">
-      <button class="tab-btn active" data-tab="image-tools">图片工具</button>
-      <button class="tab-btn" data-tab="conversion">格式转换</button>
+      <button class="tab-btn active" data-tab="image-tools">📷 图片工具</button>
+      <button class="tab-btn" data-tab="conversion">🎞 格式转换</button>
     </div>
 
     <!-- Image Tools Tab -->
@@ -25,27 +39,24 @@
               <canvas id="overlay-canvas"></canvas>
             </div>
           </div>
-          <div class="image-controls">
-            <button id="btn-open">打开图片 (Ctrl+O)</button>
-            <button id="btn-save">保存图片 (Ctrl+S)</button>
-            <button id="btn-undo">撤销 (Ctrl+Z)</button>
-            <button id="btn-redo">重做 (Ctrl+Shift+Z)</button>
-            <button id="btn-toggle-mode">选区: 矩形 (Tab)</button>
-          </div>
         </div>
 
         <div class="tools-panel">
-          <div class="tab-bar tool-tabs">
-            <button class="tab-btn active" data-tool="mosaic">添加马赛克</button>
-            <button class="tab-btn" data-tool="text">添加文字</button>
-            <button class="tab-btn" data-tool="blur">添加模糊</button>
-            <button class="tab-btn" data-tool="camera">相机效果</button>
+          <div class="pill-bar" id="img-pill-bar">
+            <button class="pill-btn active" data-tool="mosaic"><span class="icon">▦</span>马赛克</button>
+            <button class="pill-btn" data-tool="text"><span class="icon">T</span>文字</button>
+            <button class="pill-btn" data-tool="blur"><span class="icon">∼</span>模糊</button>
+            <button class="pill-btn" data-tool="camera"><span class="icon">📷</span>相机</button>
+            <button class="pill-btn pill-output" data-tool="save"><span class="icon">📁</span>保存到</button>
           </div>
 
           <div class="tool-content active" id="tool-mosaic">
-            <label>马赛克大小: <span id="mosaic-size-val">20</span></label>
-            <input type="range" id="mosaic-size" min="5" max="50" value="20" step="1" />
-            <button id="btn-apply-mosaic" class="btn-apply">应用马赛克 (Ctrl+M)</button>
+            <div class="field"><label>马赛克大小: <span id="mosaic-size-val">20</span></label>
+              <input type="range" id="mosaic-size" min="5" max="50" value="20" step="1" />
+            </div>
+            <div class="apply-row">
+              <button id="btn-apply-mosaic" class="btn-apply">应用马赛克 (Ctrl+M)</button>
+            </div>
           </div>
 
           <div class="tool-content" id="tool-text">
@@ -82,7 +93,9 @@
             <div class="preview-row">
               <canvas id="text-preview" width="60" height="60"></canvas>
             </div>
-            <button id="btn-apply-text" class="btn-apply">添加文字图层</button>
+            <div class="apply-row">
+              <button id="btn-apply-text" class="btn-apply">添加文字图层</button>
+            </div>
             <div class="text-layer-section" id="text-layer-section">
               <label class="text-layer-header">文字图层</label>
               <div id="text-layer-list" class="text-layer-list"></div>
@@ -90,8 +103,9 @@
           </div>
 
           <div class="tool-content" id="tool-blur">
-            <label>模糊强度: <span id="blur-intensity-val">20</span></label>
-            <input type="range" id="blur-intensity" min="5" max="50" value="20" step="1" />
+            <div class="field"><label>模糊强度: <span id="blur-intensity-val">20</span></label>
+              <input type="range" id="blur-intensity" min="5" max="50" value="20" step="1" />
+            </div>
             <div class="form-row">
               <label>模糊角度: <span id="blur-angle-val">90</span>&deg;</label>
               <input type="range" id="blur-angle" min="0" max="180" value="90" step="1" />
@@ -99,7 +113,9 @@
             <div class="preview-row">
               <canvas id="blur-preview" width="60" height="60"></canvas>
             </div>
-            <button id="btn-apply-blur" class="btn-apply">应用模糊 (Ctrl+B)</button>
+            <div class="apply-row">
+              <button id="btn-apply-blur" class="btn-apply">应用模糊 (Ctrl+B)</button>
+            </div>
           </div>
 
           <div class="tool-content" id="tool-camera">
@@ -111,7 +127,25 @@
               <label>计时器:</label>
               <input type="text" id="camera-timer" value="" placeholder="HH:MM:SS.mmm" />
             </div>
-            <button id="btn-apply-camera" class="btn-apply">应用相机效果</button>
+            <div class="apply-row">
+              <button id="btn-apply-camera" class="btn-apply">应用相机效果</button>
+            </div>
+          </div>
+
+          <div class="tool-content" id="tool-save">
+            <div class="field"><label>文件格式</label>
+              <select id="save-format">
+                <option value="png">PNG（无损）</option>
+                <option value="jpg">JPEG</option>
+              </select>
+            </div>
+            <div class="field" id="save-quality-field" style="display:none">
+              <label>JPEG 质量: <span id="save-quality-val">90</span></label>
+              <input type="range" id="save-quality" min="40" max="100" value="90" step="1" />
+            </div>
+            <div class="apply-row">
+              <button id="btn-save" class="btn-apply">📁 保存到文件... (Ctrl+S)</button>
+            </div>
           </div>
         </div>
       </div>
@@ -142,199 +176,185 @@
             <input type="range" id="conv-frame-slider" min="0" max="0" value="0" step="1" />
             <button id="conv-btn-next" title="下一帧">&gt;</button>
             <label class="conv-loop-toggle" title="到末尾后是否从头播放"><input type="checkbox" id="conv-loop" checked /> 循环</label>
-            <button id="conv-btn-undo" title="撤销 (Ctrl+Z)" disabled>↶ 撤销</button>
             <span id="conv-frame-info">未加载文件</span>
           </div>
         </div>
+
         <div class="conv-controls-panel">
-          <div class="conv-toolbar">
-            <button id="conv-btn-open">打开文件</button>
-            <button id="conv-btn-export" disabled>导出</button>
-            <button id="conv-btn-estimate" disabled>估算大小</button>
+          <div class="pill-bar" id="conv-pill-bar">
+            <button class="pill-btn active" data-conv-tool="mosaic"><span class="icon">▦</span>马赛克</button>
+            <button class="pill-btn" data-conv-tool="text" disabled title="视频模式即将支持"><span class="icon">T</span>文字</button>
+            <button class="pill-btn" data-conv-tool="blur" disabled title="视频模式即将支持"><span class="icon">∼</span>模糊</button>
+            <button class="pill-btn" data-conv-tool="camera"><span class="icon">📷</span>相机</button>
+            <button class="pill-btn pill-output" data-conv-tool="output"><span class="icon">📦</span>输出</button>
           </div>
 
-          <div class="conv-section conv-file-info" id="conv-file-info" style="display:none">
-            <label class="conv-section-title">文件信息</label>
-            <div class="conv-info-grid" id="conv-info-grid"></div>
+          <div class="conv-tool-content active" id="conv-tool-mosaic">
+            <div class="field"><label>方块大小: <span id="conv-mosaic-size-val">20</span></label>
+              <input type="range" id="conv-mosaic-size" min="5" max="50" value="20" step="1" />
+            </div>
+            <div class="field">
+              <label><input type="checkbox" id="conv-mosaic-enable" /> 启用 / 在预览上框选区域</label>
+            </div>
+            <div class="apply-row">
+              <button id="conv-btn-mosaic-frame" class="btn-apply" disabled>应用本帧</button>
+              <button id="conv-btn-mosaic-all" class="btn-apply secondary" disabled>应用全部</button>
+            </div>
           </div>
 
-          <div class="conv-section">
-            <label>输出格式:</label>
-            <select id="conv-format">
-              <option value="gif">GIF</option>
-              <option value="mp4">MP4</option>
-              <option value="webp">WebP</option>
-              <option value="apng">APNG</option>
-              <option value="ugoira">Ugoira (pixiv 文件夹)</option>
-            </select>
+          <div class="conv-tool-content" id="conv-tool-text">
+            <p style="color: var(--text-dim); padding: 8px 0;">视频模式的文字叠加即将支持。当前只能在图片工具 tab 单图编辑。</p>
           </div>
 
-          <div class="conv-section" id="conv-preset-section">
-            <label>预设:</label>
-            <select id="conv-preset">
-              <option value="extreme">极致压缩 (推荐)</option>
-              <option value="balanced">平衡画质</option>
-              <option value="high">高质量</option>
-              <option value="smallest">最小体积</option>
-              <option value="original">原始质量</option>
-              <option value="custom">自定义</option>
-            </select>
+          <div class="conv-tool-content" id="conv-tool-blur">
+            <p style="color: var(--text-dim); padding: 8px 0;">视频模式的模糊即将支持。当前只能在图片工具 tab 单图编辑。</p>
           </div>
 
-          <div class="conv-section">
-            <label>帧范围:</label>
-            <div class="conv-row">
+          <div class="conv-tool-content" id="conv-tool-camera">
+            <div class="field">
+              <label><input type="checkbox" id="conv-camera-enable" /> 启用相机效果叠加</label>
+            </div>
+            <div class="field">
+              <label>电量: <span id="conv-camera-battery-val">100</span>%</label>
+              <input type="range" id="conv-camera-battery" min="0" max="100" value="100" step="1" />
+            </div>
+            <div class="field">
+              <label>计时起始:</label>
+              <input type="text" id="conv-camera-timer" value="00:00:00.000" placeholder="HH:MM:SS.mmm" />
+            </div>
+            <div class="form-row">
+              <label><input type="checkbox" id="conv-camera-auto-inc" checked /> 导出时自动递增</label>
+              <input type="number" id="conv-camera-auto-inc-ms" value="100" min="1" style="width:70px" />
+              <label>ms/帧</label>
+            </div>
+            <div class="apply-row">
+              <button id="conv-btn-camera-frame" class="btn-apply">应用本帧</button>
+              <button id="conv-btn-camera-all" class="btn-apply secondary">应用全部</button>
+            </div>
+          </div>
+
+          <div class="conv-tool-content" id="conv-tool-output">
+            <div class="conv-section conv-file-info" id="conv-file-info" style="display:none">
+              <label class="conv-section-title">文件信息</label>
+              <div class="conv-info-grid" id="conv-info-grid"></div>
+            </div>
+
+            <div class="field"><label>输出格式</label>
+              <select id="conv-format">
+                <option value="gif">GIF</option>
+                <option value="mp4">MP4</option>
+                <option value="webp">WebP</option>
+                <option value="apng">APNG</option>
+                <option value="ugoira">Ugoira (pixiv 文件夹)</option>
+              </select>
+            </div>
+
+            <div class="field" id="conv-preset-section">
+              <label>预设</label>
+              <select id="conv-preset">
+                <option value="extreme">极致压缩 (推荐)</option>
+                <option value="balanced">平衡画质</option>
+                <option value="high">高质量</option>
+                <option value="smallest">最小体积</option>
+                <option value="original">原始质量</option>
+                <option value="custom">自定义</option>
+              </select>
+            </div>
+
+            <div class="form-row">
               <label>起始:</label>
               <input type="number" id="conv-start-frame" value="0" min="0" />
               <label>结束:</label>
               <input type="number" id="conv-end-frame" value="0" min="0" />
             </div>
-          </div>
 
-          <div class="conv-section">
-            <div class="conv-row">
+            <div class="field">
               <label>帧率: <span id="conv-fps-val">15</span></label>
               <input type="range" id="conv-fps" min="1" max="60" value="15" step="1" />
             </div>
-          </div>
 
-          <div class="conv-section conv-ugoira-options" id="conv-ugoira-options" style="display:none">
-            <div class="conv-row">
-              <label>JPEG 质量: <span id="conv-ugoira-quality-val">85</span></label>
-              <input type="range" id="conv-ugoira-quality" min="40" max="100" value="85" step="1" />
-            </div>
-            <div class="conv-row">
-              <label>缩放:</label>
-              <select id="conv-ugoira-scale">
-                <option value="100">100%</option>
-                <option value="75">75%</option>
-                <option value="50" selected>50%</option>
-                <option value="33">33%</option>
-                <option value="custom">自定义...</option>
-              </select>
-              <input type="number" id="conv-ugoira-scale-custom" min="1" max="100" value="50" style="width:60px; display:none" />
-              <label id="conv-ugoira-scale-pct-label" style="display:none">%</label>
-            </div>
-            <div class="conv-row">
-              <label>帧延迟:</label>
-              <select id="conv-ugoira-delay">
-                <option value="33">33 ms (~30 fps)</option>
-                <option value="50" selected>50 ms (20 fps)</option>
-                <option value="100">100 ms (10 fps)</option>
-                <option value="custom">自定义...</option>
-              </select>
-              <input type="number" id="conv-ugoira-delay-custom" min="1" max="10000" value="50" style="width:70px; display:none" />
-              <label id="conv-ugoira-delay-ms-label" style="display:none">ms</label>
-            </div>
-            <div class="conv-ugoira-hint" style="font-size:12px; opacity:0.7; margin-top:6px">
-              输出为一个文件夹：000000.jpg... + animation.json。pixiv 限制：总帧数 &lt; 500，文件总体积 &lt; 16 MB。上传时把整个文件夹打 zip 拖到 pixiv，再确认 / 修改帧延迟。
-            </div>
-          </div>
-
-          <div class="conv-section conv-gif-options" id="conv-gif-options">
-            <div class="conv-row">
-              <label>颜色数: <span id="conv-colors-val">128</span></label>
-              <input type="range" id="conv-colors" min="2" max="256" value="128" step="1" />
-            </div>
-            <div class="conv-row">
-              <label>缩放:</label>
-              <select id="conv-scale">
-                <option value="100">100%</option>
-                <option value="75">75%</option>
-                <option value="50" selected>50%</option>
-                <option value="33">33%</option>
-                <option value="25">25%</option>
-              </select>
-            </div>
-            <div class="conv-row">
-              <label>抖动:</label>
-              <select id="conv-dither">
-                <option value="sierra2_4a">sierra2_4a (高质量)</option>
-                <option value="bayer">bayer (均衡)</option>
-                <option value="none">无 (最小体积)</option>
-              </select>
-            </div>
-            <div class="conv-row">
-              <label>
-                <input type="checkbox" id="conv-diff-palette" checked />
-                差异调色板 (静态背景优化)
-              </label>
-            </div>
-          </div>
-
-          <div class="conv-section">
-            <label class="conv-section-title">效果</label>
-
-            <div class="conv-row">
-              <label>
-                <input type="checkbox" id="conv-mosaic-enable" />
-                马赛克 (在预览上框选区域)
-              </label>
-            </div>
-            <div class="conv-mosaic-options" id="conv-mosaic-options" style="display:none">
-              <div class="conv-row">
-                <label>马赛克大小: <span id="conv-mosaic-size-val">20</span></label>
-                <input type="range" id="conv-mosaic-size" min="5" max="50" value="20" step="1" />
+            <div class="conv-section conv-gif-options" id="conv-gif-options">
+              <div class="field"><label>颜色数: <span id="conv-colors-val">128</span></label>
+                <input type="range" id="conv-colors" min="2" max="256" value="128" step="1" />
               </div>
-              <div class="conv-effect-buttons">
-                <button id="conv-btn-mosaic-frame" class="btn-secondary" disabled>应用到当前帧</button>
-                <button id="conv-btn-mosaic-all" class="btn-secondary" disabled>应用到所有帧</button>
+              <div class="field"><label>缩放</label>
+                <select id="conv-scale">
+                  <option value="100">100%</option>
+                  <option value="75">75%</option>
+                  <option value="50" selected>50%</option>
+                  <option value="33">33%</option>
+                  <option value="25">25%</option>
+                </select>
+              </div>
+              <div class="field"><label>抖动</label>
+                <select id="conv-dither">
+                  <option value="sierra2_4a">sierra2_4a (高质量)</option>
+                  <option value="bayer">bayer (均衡)</option>
+                  <option value="none">无 (最小体积)</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label><input type="checkbox" id="conv-diff-palette" checked /> 差异调色板 (静态背景优化)</label>
               </div>
             </div>
 
-            <div class="conv-row">
-              <label>
-                <input type="checkbox" id="conv-camera-enable" />
-                相机效果叠加
-              </label>
-            </div>
-            <div class="conv-camera-options" id="conv-camera-options" style="display:none">
-              <div class="conv-row">
-                <label>电量: <span id="conv-camera-battery-val">100</span>%</label>
-                <input type="range" id="conv-camera-battery" min="0" max="100" value="100" step="1" />
+            <div class="conv-section conv-ugoira-options" id="conv-ugoira-options" style="display:none">
+              <div class="field"><label>JPEG 质量: <span id="conv-ugoira-quality-val">85</span></label>
+                <input type="range" id="conv-ugoira-quality" min="40" max="100" value="85" step="1" />
               </div>
-              <div class="conv-row">
-                <label>计时起始:</label>
-                <input type="text" id="conv-camera-timer" value="00:00:00.000" placeholder="HH:MM:SS.mmm" />
+              <div class="form-row">
+                <label>缩放:</label>
+                <select id="conv-ugoira-scale">
+                  <option value="100">100%</option>
+                  <option value="75">75%</option>
+                  <option value="50" selected>50%</option>
+                  <option value="33">33%</option>
+                  <option value="custom">自定义...</option>
+                </select>
+                <input type="number" id="conv-ugoira-scale-custom" min="1" max="100" value="50" style="width:60px; display:none" />
+                <label id="conv-ugoira-scale-pct-label" style="display:none">%</label>
               </div>
-              <div class="conv-row">
-                <label>
-                  <input type="checkbox" id="conv-camera-auto-inc" checked />
-                  导出时自动递增
-                </label>
-                <input type="number" id="conv-camera-auto-inc-ms" value="100" min="1" style="width:70px" />
-                <label>ms/帧</label>
+              <div class="form-row">
+                <label>帧延迟:</label>
+                <select id="conv-ugoira-delay">
+                  <option value="33">33 ms (~30 fps)</option>
+                  <option value="50" selected>50 ms (20 fps)</option>
+                  <option value="100">100 ms (10 fps)</option>
+                  <option value="custom">自定义...</option>
+                </select>
+                <input type="number" id="conv-ugoira-delay-custom" min="1" max="10000" value="50" style="width:70px; display:none" />
+                <label id="conv-ugoira-delay-ms-label" style="display:none">ms</label>
               </div>
-              <div class="conv-effect-buttons">
-                <button id="conv-btn-camera-frame" class="btn-secondary">应用到当前帧</button>
-                <button id="conv-btn-camera-all" class="btn-secondary">应用到所有帧</button>
+              <div class="conv-ugoira-hint" style="font-size:12px; opacity:0.7; margin-top:6px">
+                pixiv 限制：总帧数 &lt; 500，文件总体积 &lt; 16 MB。上传时把文件夹打 zip 拖到 pixiv。
               </div>
             </div>
 
-            <div class="conv-effect-buttons" style="margin-top:8px">
-              <button id="conv-btn-reset-effects" class="btn-danger" disabled>重置所有效果</button>
+            <div class="conv-section" id="conv-estimate-display" style="display:none">
+              <div class="conv-estimate-text" id="conv-estimate-text"></div>
             </div>
-          </div>
 
-          <div class="conv-section" id="conv-estimate-display" style="display:none">
-            <div class="conv-estimate-text" id="conv-estimate-text"></div>
-          </div>
-
-          <div class="conv-section" id="conv-progress-section" style="display:none">
-            <div class="conv-progress-bar">
-              <div class="conv-progress-fill" id="conv-progress-fill"></div>
+            <div class="conv-section" id="conv-progress-section" style="display:none">
+              <div class="conv-progress-bar">
+                <div class="conv-progress-fill" id="conv-progress-fill"></div>
+              </div>
+              <span id="conv-progress-text">0%</span>
             </div>
-            <span id="conv-progress-text">0%</span>
-          </div>
 
-          <div class="conv-section">
-            <div class="conv-status" id="conv-status"></div>
+            <div class="apply-row">
+              <button id="conv-btn-estimate" class="btn-apply secondary" disabled>估算大小</button>
+              <button id="conv-btn-export" class="btn-apply" disabled>📦 导出</button>
+            </div>
+
+            <div class="conv-section">
+              <div class="conv-status" id="conv-status"></div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp,image/bmp" style="display:none" />
+    <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp,image/bmp" style="display:none" />
+  </div>
 </body>
 </html>

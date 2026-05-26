@@ -169,8 +169,10 @@ describe("conversion tab structure", () => {
     expect(document.getElementById("conv-canvas")).not.toBeNull();
   });
 
-  it("open file button exists", () => {
-    expect(document.getElementById("conv-btn-open")).not.toBeNull();
+  it("open file button exists in shared top toolbar", () => {
+    // #conv-btn-open was removed when the toolbar was unified — the
+    // shared #btn-open dispatches based on active tab.
+    expect(document.getElementById("btn-open")).not.toBeNull();
   });
 
   it("export button exists and starts disabled", () => {
@@ -344,9 +346,12 @@ describe("conversion camera effect controls", () => {
     expect(el.value).toBe("00:00:00.000");
   });
 
-  it("camera options are hidden by default", () => {
-    const el = document.getElementById("conv-camera-options");
-    expect(el.style.display).toBe("none");
+  it("camera-enable checkbox exists and is unchecked by default", () => {
+    // Each effect is now its own pill pane; the old #conv-camera-options
+    // sub-section was folded into #conv-tool-camera.
+    const el = document.getElementById("conv-camera-enable");
+    expect(el).not.toBeNull();
+    expect(el.checked).toBe(false);
   });
 });
 
@@ -432,8 +437,11 @@ describe("conversion mosaic controls", () => {
     expect(parseInt(el.value)).toBe(20);
   });
 
-  it("mosaic options are hidden by default", () => {
-    expect(document.getElementById("conv-mosaic-options").style.display).toBe("none");
+  it("mosaic-enable checkbox exists and is unchecked by default", () => {
+    // #conv-mosaic-options sub-section was folded into #conv-tool-mosaic.
+    const el = document.getElementById("conv-mosaic-enable");
+    expect(el).not.toBeNull();
+    expect(el.checked).toBe(false);
   });
 
   it("mosaic apply-to-frame button exists and starts disabled", () => {
@@ -489,10 +497,10 @@ describe("conversion reset effects", () => {
   beforeEach(setup);
   afterEach(teardown);
 
-  it("reset effects button exists and starts disabled", () => {
-    const btn = document.getElementById("conv-btn-reset-effects");
-    expect(btn).not.toBeNull();
-    expect(btn.disabled).toBe(true);
+  it("reset effects button exists in shared top toolbar", () => {
+    // #conv-btn-reset-effects was replaced by the shared #btn-reset
+    // (dispatches to resetEffects when conversion tab is active).
+    expect(document.getElementById("btn-reset")).not.toBeNull();
   });
 });
 

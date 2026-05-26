@@ -53,8 +53,16 @@ function clearHistory() {
 }
 
 function refreshUndoButton() {
-  const btn = $("#conv-btn-undo");
-  if (btn) btn.disabled = state.history.length === 0;
+  // The undo button now lives in the shared top toolbar (#btn-undo) and
+  // applies to whichever tab is active. main.js handles its disabled state.
+}
+
+function refreshMosaicButtons() {
+  const enabled = $("#conv-mosaic-enable")?.checked && state.mosaicSelection != null;
+  const f = $("#conv-btn-mosaic-frame");
+  const a = $("#conv-btn-mosaic-all");
+  if (f) f.disabled = !enabled;
+  if (a) a.disabled = !enabled;
 }
 
 // ── DOM refs ────────────────────────────────────────────────────────────────
@@ -69,21 +77,19 @@ export function initConversion() {
   overlayCanvas = $("#conv-overlay-canvas");
   overlayCtx = overlayCanvas.getContext("2d");
 
-  $("#conv-btn-open").addEventListener("click", openFile);
+  // #conv-btn-open + #conv-btn-undo + #conv-btn-reset-effects no longer
+  // exist — main.js's toolbar dispatches to openFile / undo / resetEffects
+  // via the API returned from initConversion().
   $("#conv-btn-export").addEventListener("click", exportAnimation);
   $("#conv-btn-estimate").addEventListener("click", estimateSize);
   $("#conv-btn-prev").addEventListener("click", () => seekFrame(state.currentFrame - 1));
   $("#conv-btn-next").addEventListener("click", () => seekFrame(state.currentFrame + 1));
   $("#conv-btn-play").addEventListener("click", togglePlay);
-  $("#conv-btn-undo").addEventListener("click", undo);
   $("#conv-frame-slider").addEventListener("input", (e) => seekFrame(parseInt(e.target.value)));
 
   $("#conv-format").addEventListener("change", onFormatChange);
   $("#conv-preset").addEventListener("change", onPresetChange);
-  $("#conv-camera-enable").addEventListener("change", (e) => {
-    $("#conv-camera-options").style.display = e.target.checked ? "" : "none";
-    updatePreview();
-  });
+  $("#conv-camera-enable").addEventListener("change", () => updatePreview());
   $("#conv-camera-battery").addEventListener("input", (e) => {
     $("#conv-camera-battery-val").textContent = e.target.value;
     updatePreview();
@@ -110,11 +116,12 @@ export function initConversion() {
 
   // Mosaic controls
   $("#conv-mosaic-enable").addEventListener("change", (e) => {
-    $("#conv-mosaic-options").style.display = e.target.checked ? "" : "none";
     if (!e.target.checked) {
       state.mosaicSelection = null;
       clearConvOverlay();
     }
+    // Update apply-button enabled state based on selection
+    refreshMosaicButtons();
   });
   $("#conv-mosaic-size").addEventListener("input", (e) => {
     $("#conv-mosaic-size-val").textContent = e.target.value;
@@ -126,8 +133,18 @@ export function initConversion() {
   $("#conv-btn-camera-frame").addEventListener("click", () => applyCameraToFrames(false));
   $("#conv-btn-camera-all").addEventListener("click", () => applyCameraToFrames(true));
 
-  // Reset effects
-  $("#conv-btn-reset-effects").addEventListener("click", resetEffects);
+  // Pill bar (right panel tool switching)
+  const pillBar = $("#conv-pill-bar");
+  pillBar.addEventListener("click", (e) => {
+    const btn = e.target.closest(".pill-btn");
+    if (!btn || btn.disabled) return;
+    pillBar.querySelectorAll(".pill-btn").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    const tool = btn.dataset.convTool;
+    document.querySelectorAll(".conv-tool-content").forEach((el) => {
+      el.classList.toggle("active", el.id === `conv-tool-${tool}`);
+    });
+  });
 
   // Overlay canvas mouse events for mosaic selection
   overlayCanvas.addEventListener("mousedown", onOverlayMouseDown);
@@ -167,6 +184,15 @@ export function initConversion() {
 
   applyPreset("extreme");
   onFormatChange();
+
+  // API exposed to main.js's shared top toolbar dispatcher.
+  return {
+    openFile,
+    undo,
+    resetEffects,
+    hasFrames: () => state.frames.length > 0,
+    historyDepth: () => state.history.length,
+  };
 }
 
 function togglePlay() {
@@ -254,7 +280,10 @@ async function loadFromPath(path) {
     $("#conv-fps-val").textContent = fps;
 
     onFramesLoaded();
-    setStatus(`已加载 ${state.frames.length} 帧，来自 ${path.split(/[/\\]/).pop()}`);
+    const baseName = path.split(/[/\\]/).pop();
+    setStatus(`已加载 ${state.frames.length} 帧，来自 ${baseName}`);
+    const el = document.getElementById("top-filename");
+    if (el) el.textContent = baseName;
   } catch (e) {
     showLoading(false);
     setStatus(`加载失败: ${e}`);
@@ -303,6 +332,8 @@ async function loadFromFile(file) {
 
     onFramesLoaded();
     setStatus(`已加载 ${state.frames.length} 帧，来自 ${file.name}`);
+    const elT = document.getElementById("top-filename");
+    if (elT) elT.textContent = file.name;
   } catch (e) {
     showLoading(false);
     setStatus(`加载失败: ${e}`);
@@ -418,7 +449,7 @@ function onFramesLoaded() {
 
   $("#conv-btn-export").disabled = false;
   $("#conv-btn-estimate").disabled = false;
-  $("#conv-btn-reset-effects").disabled = false;
+  // (#conv-btn-reset-effects removed — reset is now the shared toolbar button)
 
   updatePreview();
 }
@@ -790,6 +821,7 @@ function onOverlayMouseMove(e) {
     h: Math.abs(cur.y - s.y),
   };
   drawMosaicSelection(state.mosaicSelection);
+  refreshMosaicButtons();
 }
 
 function onOverlayMouseUp() {
@@ -901,6 +933,7 @@ function resetEffects() {
   Promise.all(pending).then(() => {
     state.mosaicSelection = null;
     clearConvOverlay();
+    refreshMosaicButtons();
     updatePreview();
     setStatus("已重置所有效果");
   });
