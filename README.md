@@ -29,10 +29,12 @@
 
 ## 下载
 
-免安装、单文件 exe，双击即可运行（Windows x64）：
+免安装、单文件 exe，解压后双击即可运行（Windows x64）：
 
-- **正式版**：从 [Releases](https://github.com/xyz2357/image-tools-tauri/releases) 下载 `ImageTools.exe`（打 tag `v*` 时由 CI 发布）。
+- **正式版**：从 [Releases](https://github.com/xyz2357/image-tools-tauri/releases) 下载 `ImageTools-windows-x64.zip`（打 tag `v*` 时由 CI 发布）。
 - **最新开发版**：在 [Actions](https://github.com/xyz2357/image-tools-tauri/actions) 里选一次 `build` 运行，下载底部 `ImageTools-windows-x64` artifact（需要登录 GitHub）。
+
+> ⚠️ 首次运行时，Windows SmartScreen 可能会弹出"已保护你的电脑"提示——这是因为 exe 没有代码签名证书。点击"更多信息" → "仍要运行"即可。如果对此有顾虑，可以自行从源码构建（见下方"开发"小节）。
 
 ## 开发
 

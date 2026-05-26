@@ -36,21 +36,22 @@ jobs:
       - name: Build (exe only, no installer)
         run: npx tauri build --no-bundle
 
-      - name: Stage exe with friendly name
+      - name: Stage and zip exe
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force out | Out-Null
           Copy-Item "src-tauri/target/release/c-codeimage_tools_tauri.exe" "out/ImageTools.exe"
+          Compress-Archive -Path "out/ImageTools.exe" -DestinationPath "out/ImageTools-windows-x64.zip" -Force
 
       - uses: actions/upload-artifact@v4
         with:
           name: ImageTools-windows-x64
-          path: out/ImageTools.exe
+          path: out/ImageTools-windows-x64.zip
           if-no-files-found: error
 
       - name: Create Release (tags only)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: out/ImageTools.exe
+          files: out/ImageTools-windows-x64.zip
           generate_release_notes: true
