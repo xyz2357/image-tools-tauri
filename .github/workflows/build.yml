@@ -28,7 +28,7 @@ jobs:
       - run: npm ci
 
       - name: Build (exe only, no installer)
-        run: npx tauri build --bundles none
+        run: npx tauri build --no-bundle
 
       - name: Stage exe with friendly name
         shell: pwsh
