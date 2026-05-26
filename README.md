@@ -27,11 +27,12 @@
 - `Ctrl+M` 应用马赛克 / `Ctrl+B` 应用模糊
 - `Tab` 切换选区模式
 
-## 安装
+## 下载
 
-下载 [Releases](https://github.com/xyz2357/image-tools-tauri/releases) 中的安装包：
-- **Windows**：`Image Tools_x.y.z_x64-setup.exe`（NSIS）或 `.msi`
-- 也可以直接运行 `c-codeimage_tools_tauri.exe`（免安装）
+免安装、单文件 exe，双击即可运行（Windows x64）：
+
+- **正式版**：从 [Releases](https://github.com/xyz2357/image-tools-tauri/releases) 下载 `ImageTools.exe`（打 tag `v*` 时由 CI 发布）。
+- **最新开发版**：在 [Actions](https://github.com/xyz2357/image-tools-tauri/actions) 里选一次 `build` 运行，下载底部 `ImageTools-windows-x64` artifact（需要登录 GitHub）。
 
 ## 开发
 

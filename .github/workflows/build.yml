@@ -1,0 +1,50 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+
+      - name: Build (exe only, no installer)
+        run: npx tauri build --bundles none
+
+      - name: Stage exe with friendly name
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force out | Out-Null
+          Copy-Item "src-tauri/target/release/c-codeimage_tools_tauri.exe" "out/ImageTools.exe"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ImageTools-windows-x64
+          path: out/ImageTools.exe
+          if-no-files-found: error
+
+      - name: Create Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: out/ImageTools.exe
+          generate_release_notes: true
