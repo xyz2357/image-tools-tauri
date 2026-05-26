@@ -15,7 +15,8 @@
         "height": 900,
         "resizable": true,
         "center": true,
-        "dragDropEnabled": false
+        "dragDropEnabled": false,
+        "additionalBrowserArgs": "--remote-debugging-port=9222 --disable-features=ElasticOverscroll"
       }
     ],
     "security": {

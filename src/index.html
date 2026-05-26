@@ -132,6 +132,8 @@
             <button id="conv-btn-play" title="播放 / 暂停 (Space)">▶</button>
             <input type="range" id="conv-frame-slider" min="0" max="0" value="0" step="1" />
             <button id="conv-btn-next" title="下一帧">&gt;</button>
+            <label class="conv-loop-toggle" title="到末尾后是否从头播放"><input type="checkbox" id="conv-loop" checked /> 循环</label>
+            <button id="conv-btn-undo" title="撤销 (Ctrl+Z)" disabled>↶ 撤销</button>
             <span id="conv-frame-info">未加载文件</span>
           </div>
         </div>
@@ -224,7 +226,7 @@
               <label id="conv-ugoira-delay-ms-label" style="display:none">ms</label>
             </div>
             <div class="conv-ugoira-hint" style="font-size:12px; opacity:0.7; margin-top:6px">
-              输出为一个文件夹：000000.jpg... + animation.json。pixiv 限制：总帧数 ≤ 250，单帧 ≤ 1920×1080，总体积 ≤ 100MB。上传时把整个文件夹打 zip 拖到 pixiv，再确认 / 修改帧延迟。
+              输出为一个文件夹：000000.jpg... + animation.json。pixiv 限制：总帧数 &lt; 500，文件总体积 &lt; 16 MB。上传时把整个文件夹打 zip 拖到 pixiv，再确认 / 修改帧延迟。
             </div>
           </div>
 

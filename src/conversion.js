@@ -20,7 +20,42 @@ const state = {
   isSelectingMosaic: false,
   mosaicStart: null,
   playTimer: null,
+  history: [],
 };
+
+const HISTORY_LIMIT = 30;
+
+// Stores references to the *previous* Image objects for a frame range.
+// Cheap because state.frames slots are replaced (not mutated) by the
+// effect appliers, so the old refs remain valid until evicted here.
+function pushHistory(start, end) {
+  const oldFrames = [];
+  for (let i = start; i < end; i++) oldFrames.push(state.frames[i]);
+  state.history.push({ start, oldFrames });
+  if (state.history.length > HISTORY_LIMIT) state.history.shift();
+  refreshUndoButton();
+}
+
+function undo() {
+  const entry = state.history.pop();
+  if (!entry) return;
+  for (let i = 0; i < entry.oldFrames.length; i++) {
+    state.frames[entry.start + i] = entry.oldFrames[i];
+  }
+  refreshUndoButton();
+  updatePreview();
+  setStatus("已撤销");
+}
+
+function clearHistory() {
+  state.history = [];
+  refreshUndoButton();
+}
+
+function refreshUndoButton() {
+  const btn = $("#conv-btn-undo");
+  if (btn) btn.disabled = state.history.length === 0;
+}
 
 // ── DOM refs ────────────────────────────────────────────────────────────────
 
@@ -40,6 +75,7 @@ export function initConversion() {
   $("#conv-btn-prev").addEventListener("click", () => seekFrame(state.currentFrame - 1));
   $("#conv-btn-next").addEventListener("click", () => seekFrame(state.currentFrame + 1));
   $("#conv-btn-play").addEventListener("click", togglePlay);
+  $("#conv-btn-undo").addEventListener("click", undo);
   $("#conv-frame-slider").addEventListener("input", (e) => seekFrame(parseInt(e.target.value)));
 
   $("#conv-format").addEventListener("change", onFormatChange);
@@ -123,6 +159,9 @@ export function initConversion() {
     if (e.code === "Space" && state.frames.length > 0) {
       e.preventDefault();
       togglePlay();
+    } else if (e.ctrlKey && (e.key === "z" || e.key === "Z") && !e.shiftKey) {
+      e.preventDefault();
+      undo();
     }
   });
 
@@ -142,7 +181,13 @@ function togglePlay() {
   const interval = Math.max(16, Math.round(1000 / fps));
   $("#conv-btn-play").textContent = "❚❚";
   state.playTimer = setInterval(() => {
-    const next = (state.currentFrame + 1) % state.frames.length;
+    const loop = $("#conv-loop").checked;
+    const at_end = state.currentFrame >= state.frames.length - 1;
+    if (at_end && !loop) {
+      stopPlay();
+      return;
+    }
+    const next = at_end ? 0 : state.currentFrame + 1;
     seekFrame(next);
   }, interval);
 }
@@ -182,6 +227,7 @@ async function openFile() {
 
 async function loadFromPath(path) {
   stopPlay();
+  clearHistory();
   try {
     const info = await invoke("get_video_info", { path });
     state.sourceInfo = info;
@@ -228,6 +274,7 @@ async function loadImageFromPath(filePath) {
 
 async function loadFromFile(file) {
   stopPlay();
+  clearHistory();
   state.sourceFile = file;
   state.sourcePath = file.name;
   setStatus("加载帧中...");
@@ -280,7 +327,11 @@ async function loadVideoFrames(file) {
   const interval = 1 / fps;
   state.frames = [];
 
-  const frameLimit = Math.min(totalFrames, 600);
+  const HARD_LIMIT = 3000;
+  const frameLimit = Math.min(totalFrames, HARD_LIMIT);
+  if (totalFrames > HARD_LIMIT) {
+    setStatus(`视频共 ${totalFrames} 帧，仅加载前 ${HARD_LIMIT} 帧（内存限制）。完整加载请用更短的视频或更低 fps。`);
+  }
   for (let i = 0; i < frameLimit; i++) {
     video.currentTime = i * interval;
     await new Promise((resolve) => {
@@ -542,8 +593,8 @@ async function exportAnimation() {
     return;
   }
 
-  if (format === "ugoira" && exportFrames.length > 250) {
-    const ok = confirm(`Ugoira 帧数 ${exportFrames.length} 超过 pixiv 上限 250 帧。仍要导出吗？（可上传别处，但 pixiv 会拒绝）`);
+  if (format === "ugoira" && exportFrames.length >= 500) {
+    const ok = confirm(`Ugoira 帧数 ${exportFrames.length} 达到/超过 pixiv 上限 (< 500 帧)。仍要导出吗？（pixiv 会拒绝；其他用途可继续）`);
     if (!ok) return;
   }
 
@@ -758,6 +809,7 @@ function applyMosaicToFrames(allFrames) {
   const blockSize = parseInt($("#conv-mosaic-size").value);
   const startIdx = allFrames ? 0 : state.currentFrame;
   const endIdx = allFrames ? state.frames.length : state.currentFrame + 1;
+  pushHistory(startIdx, endIdx);
   const pending = [];
 
   for (let i = startIdx; i < endIdx; i++) {
@@ -808,6 +860,7 @@ function applyCameraToFrames(allFrames) {
   const timerStart = $("#conv-camera-timer").value || "00:00:00.000";
   const startIdx = allFrames ? 0 : state.currentFrame;
   const endIdx = allFrames ? state.frames.length : state.currentFrame + 1;
+  pushHistory(startIdx, endIdx);
   const pending = [];
 
   for (let i = startIdx; i < endIdx; i++) {
@@ -835,6 +888,7 @@ function applyCameraToFrames(allFrames) {
 
 function resetEffects() {
   if (state.originalFrames.length === 0) return;
+  pushHistory(0, state.frames.length);
   const pending = [];
 
   state.frames = state.originalFrames.map((img) => {

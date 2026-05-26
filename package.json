@@ -6,9 +6,11 @@
   "scripts": {
     "tauri": "tauri",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e": "playwright test --config=e2e/playwright.config.js"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@tauri-apps/cli": "^2",
     "jsdom": "^29.1.1",
     "vitest": "^4.1.6"

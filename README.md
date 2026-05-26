@@ -47,6 +47,18 @@ npm run tauri build    # 打包发布
 npm test               # 跑前端单元测试 (vitest)
 ```
 
+### E2E 测试（可选）
+
+走 **Playwright via CDP**：WebView2 通过 `--remote-debugging-port=9222` 启动调试端口，Playwright 用 `chromium.connectOverCDP` 直接接上，绕过 tauri-driver。比官方推荐的 WebdriverIO 路线稳得多。
+
+```bash
+npm run e2e          # 自动 cargo build --release + 启动 app + 跑 e2e/specs/*.e2e.js
+```
+
+测试文件在 `e2e/specs/`，当前只有一个 smoke test（窗口能起 + tab 切换 + ugoira 格式可选）。
+
+注意：因为 webview 开了 CDP 端口，发布版本里如果不想保留这个调试通道，可以把 `additionalBrowserArgs` 从 `tauri.conf.json` 移到一个 conditional 配置里。
+
 ## 技术栈
 
 - [Tauri 2](https://tauri.app/) — Rust 后端 + WebView 前端

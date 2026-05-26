@@ -142,6 +142,39 @@ fn parse_fps(rate: &str) -> f64 {
     }
 }
 
+/// Sweep stale `image_tools_<pid>` folders left over from previous runs
+/// that crashed or were force-killed before cleanup_temp_dir ran. Safe to
+/// call once at app startup. We delete any sibling whose PID is NOT the
+/// current process — own dir (if recreated) and concurrent instances are
+/// untouched.
+pub fn cleanup_orphan_temp_dirs() {
+    let tmp = std::env::temp_dir();
+    let my_pid = std::process::id();
+    let entries = match fs::read_dir(&tmp) {
+        Ok(e) => e,
+        Err(_) => return,
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_dir() { continue; }
+        let name = match path.file_name().and_then(|n| n.to_str()) {
+            Some(n) => n,
+            None => continue,
+        };
+        let pid_str = match name.strip_prefix("image_tools_") {
+            Some(s) => s,
+            None => continue,
+        };
+        let pid: u32 = match pid_str.parse() {
+            Ok(p) => p,
+            Err(_) => continue,
+        };
+        if pid == my_pid { continue; }
+        // Best-effort delete; ignore errors (concurrent instance may hold it).
+        let _ = fs::remove_dir_all(&path);
+    }
+}
+
 #[tauri::command]
 pub fn create_temp_dir() -> Result<String, String> {
     let dir = std::env::temp_dir().join(format!("image_tools_{}", std::process::id()));
