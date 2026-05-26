@@ -129,6 +129,7 @@
           </div>
           <div class="conv-frame-controls">
             <button id="conv-btn-prev" title="上一帧">&lt;</button>
+            <button id="conv-btn-play" title="播放 / 暂停 (Space)">▶</button>
             <input type="range" id="conv-frame-slider" min="0" max="0" value="0" step="1" />
             <button id="conv-btn-next" title="下一帧">&gt;</button>
             <span id="conv-frame-info">未加载文件</span>
@@ -161,7 +162,7 @@
               <option value="mp4">MP4</option>
               <option value="webp">WebP</option>
               <option value="apng">APNG</option>
-              <option value="ugoira">Ugoira (pixiv .zip)</option>
+              <option value="ugoira">Ugoira (pixiv 文件夹)</option>
             </select>
           </div>
 
@@ -223,7 +224,7 @@
               <label id="conv-ugoira-delay-ms-label" style="display:none">ms</label>
             </div>
             <div class="conv-ugoira-hint" style="font-size:12px; opacity:0.7; margin-top:6px">
-              pixiv 限制：总帧数 ≤ 250，单帧 ≤ 1920×1080，zip ≤ 100MB。上传时 pixiv 网页会让你确认 / 修改帧延迟。
+              输出为一个文件夹：000000.jpg... + animation.json。pixiv 限制：总帧数 ≤ 250，单帧 ≤ 1920×1080，总体积 ≤ 100MB。上传时把整个文件夹打 zip 拖到 pixiv，再确认 / 修改帧延迟。
             </div>
           </div>
 

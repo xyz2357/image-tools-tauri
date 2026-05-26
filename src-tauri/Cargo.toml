@@ -26,5 +26,18 @@ serde_json = "1"
 base64 = "0.22"
 tempfile = "3"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
-zip = { version = "2", default-features = false, features = ["deflate"] }
+
+# Dev builds: optimize the hot image-processing crates so ugoira export
+# (Lanczos3 resize + JPEG encode) is usable in `tauri dev`. Without
+# this, encoding a few hundred frames takes minutes. Applied per-crate
+# (not via `package."*"`) because opt-level=3 on tauri-plugin crashes
+# rustc on Windows MSVC.
+[profile.dev.package.image]
+opt-level = 3
+[profile.dev.package.png]
+opt-level = 3
+[profile.dev.package.zune-jpeg]
+opt-level = 3
+[profile.dev.package.zune-core]
+opt-level = 3
 

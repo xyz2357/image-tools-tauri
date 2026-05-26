@@ -8,6 +8,39 @@ import {
   GIF_PRESETS,
   addMsToTime,
 } from "../src/effects.js";
+import { parseSourcePath } from "../src/conversion.js";
+
+// ── parseSourcePath ──────────────────────────────────────────────────────
+
+describe("parseSourcePath", () => {
+  it("splits a Windows absolute path into stem + parent dir", () => {
+    const r = parseSourcePath("C:\\videos\\foo.mp4");
+    expect(r.stem).toBe("foo");
+    expect(r.parentDir).toBe("C:\\videos");
+  });
+
+  it("splits a POSIX path into stem + parent dir", () => {
+    const r = parseSourcePath("/home/user/clip.gif");
+    expect(r.stem).toBe("clip");
+    expect(r.parentDir).toBe("/home/user");
+  });
+
+  it("returns null parentDir for a bare filename", () => {
+    const r = parseSourcePath("viyo_00002.mp4");
+    expect(r.stem).toBe("viyo_00002");
+    expect(r.parentDir).toBeNull();
+  });
+
+  it("handles files with multiple dots (keeps everything before last dot)", () => {
+    const r = parseSourcePath("/a/b/file.name.with.dots.mp4");
+    expect(r.stem).toBe("file.name.with.dots");
+  });
+
+  it("handles empty / null input", () => {
+    expect(parseSourcePath("").stem).toBe("");
+    expect(parseSourcePath(null).stem).toBe("");
+  });
+});
 
 // ── effects.js: drawCameraOverlay tests ────────────────────────────────────
 

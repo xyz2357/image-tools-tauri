@@ -1,7 +1,7 @@
 import { drawCameraOverlay, addMsToTime, GIF_PRESETS, mosaicPixels } from "./effects.js";
 
 const $ = (s) => document.querySelector(s);
-const invoke = window.__TAURI__?.core?.invoke;
+const invoke = globalThis.__TAURI__?.core?.invoke;
 
 // ── State ───────────────────────────────────────────────────────────────────
 
@@ -19,6 +19,7 @@ const state = {
   mosaicSelection: null,
   isSelectingMosaic: false,
   mosaicStart: null,
+  playTimer: null,
 };
 
 // ── DOM refs ────────────────────────────────────────────────────────────────
@@ -38,6 +39,7 @@ export function initConversion() {
   $("#conv-btn-estimate").addEventListener("click", estimateSize);
   $("#conv-btn-prev").addEventListener("click", () => seekFrame(state.currentFrame - 1));
   $("#conv-btn-next").addEventListener("click", () => seekFrame(state.currentFrame + 1));
+  $("#conv-btn-play").addEventListener("click", togglePlay);
   $("#conv-frame-slider").addEventListener("input", (e) => seekFrame(parseInt(e.target.value)));
 
   $("#conv-format").addEventListener("change", onFormatChange);
@@ -96,17 +98,61 @@ export function initConversion() {
   document.addEventListener("mousemove", onOverlayMouseMove);
   document.addEventListener("mouseup", onOverlayMouseUp);
 
-  // Drag & drop
+  // Drag & drop (works once dragDropEnabled=false in tauri.conf.json)
   const scroll = $("#conv-preview-scroll");
-  scroll.addEventListener("dragover", (e) => e.preventDefault());
+  scroll.addEventListener("dragover", (e) => { e.preventDefault(); scroll.classList.add("drag-over"); });
+  scroll.addEventListener("dragleave", () => scroll.classList.remove("drag-over"));
   scroll.addEventListener("drop", (e) => {
     e.preventDefault();
+    scroll.classList.remove("drag-over");
     const file = e.dataTransfer.files[0];
     if (file) loadFromFile(file);
   });
 
+  // Click empty preview area to open file
+  scroll.addEventListener("click", (e) => {
+    if (state.frames.length === 0 && e.target === scroll) openFile();
+  });
+
+  // Space to toggle play when conversion tab is active
+  document.addEventListener("keydown", (e) => {
+    const convTabActive = $("#tab-conversion").classList.contains("active");
+    if (!convTabActive) return;
+    const tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "textarea" || tag === "select") return;
+    if (e.code === "Space" && state.frames.length > 0) {
+      e.preventDefault();
+      togglePlay();
+    }
+  });
+
   applyPreset("extreme");
   onFormatChange();
+}
+
+function togglePlay() {
+  if (state.frames.length === 0) return;
+  if (state.playTimer) {
+    clearInterval(state.playTimer);
+    state.playTimer = null;
+    $("#conv-btn-play").textContent = "▶";
+    return;
+  }
+  const fps = parseInt($("#conv-fps").value) || 15;
+  const interval = Math.max(16, Math.round(1000 / fps));
+  $("#conv-btn-play").textContent = "❚❚";
+  state.playTimer = setInterval(() => {
+    const next = (state.currentFrame + 1) % state.frames.length;
+    seekFrame(next);
+  }, interval);
+}
+
+function stopPlay() {
+  if (state.playTimer) {
+    clearInterval(state.playTimer);
+    state.playTimer = null;
+    $("#conv-btn-play").textContent = "▶";
+  }
 }
 
 // ── File loading ────────────────────────────────────────────────────────────
@@ -135,6 +181,7 @@ async function openFile() {
 }
 
 async function loadFromPath(path) {
+  stopPlay();
   try {
     const info = await invoke("get_video_info", { path });
     state.sourceInfo = info;
@@ -180,6 +227,7 @@ async function loadImageFromPath(filePath) {
 }
 
 async function loadFromFile(file) {
+  stopPlay();
   state.sourceFile = file;
   state.sourcePath = file.name;
   setStatus("加载帧中...");
@@ -423,6 +471,19 @@ function getUgoiraDelayMs() {
   return parseInt(sel);
 }
 
+// Splits a path-or-filename into { stem, parentDir }. parentDir is null
+// for bare filenames (drag&drop case where we don't know the absolute dir).
+export function parseSourcePath(srcPath) {
+  if (!srcPath) return { stem: "", parentDir: null };
+  const normalized = srcPath.replace(/\\/g, "/");
+  const lastSlash = normalized.lastIndexOf("/");
+  const base = lastSlash >= 0 ? normalized.slice(lastSlash + 1) : normalized;
+  const parentDir = lastSlash > 0 ? srcPath.slice(0, lastSlash) : null;
+  const dot = base.lastIndexOf(".");
+  const stem = dot > 0 ? base.slice(0, dot) : base;
+  return { stem, parentDir };
+}
+
 function getUgoiraScalePct() {
   const sel = $("#conv-ugoira-scale").value;
   if (sel === "custom") {
@@ -491,12 +552,21 @@ async function exportAnimation() {
     return;
   }
 
+  const { stem, parentDir } = parseSourcePath(state.sourcePath);
+
   let outputPath;
   try {
-    const extByFormat = { gif: "gif", mp4: "mp4", webp: "webp", apng: "png", ugoira: "zip" };
-    const defaultName = `output.${extByFormat[format] || format}`;
-    outputPath = await invoke("pick_save_path", { defaultName, format });
-    if (!outputPath) return;
+    if (format === "ugoira") {
+      const picked = await invoke("pick_save_folder", { defaultDir: parentDir });
+      if (!picked) return;
+      outputPath = `${picked.replace(/[\\/]+$/, "")}/${stem || "ugoira"}`;
+    } else {
+      const extByFormat = { gif: "gif", mp4: "mp4", webp: "webp", apng: "png" };
+      const ext = extByFormat[format] || format;
+      const defaultName = `${stem || "output"}.${ext}`;
+      outputPath = await invoke("pick_save_path", { defaultName, format, defaultDir: parentDir });
+      if (!outputPath) return;
+    }
   } catch (e) {
     setStatus(`对话框错误: ${e}`);
     return;
@@ -543,7 +613,23 @@ async function exportAnimation() {
     setStatus("编码中...");
 
     const options = getExportOptions();
-    await invoke("export_animation", { framesDir: tempDir, outputPath, options });
+
+    let unlistenProgress = null;
+    if (format === "ugoira" && globalThis.__TAURI__?.event?.listen) {
+      unlistenProgress = await globalThis.__TAURI__.event.listen("ugoira-progress", (ev) => {
+        const { done, total } = ev.payload || {};
+        if (total > 0) {
+          const pct = 75 + Math.round((done / total) * 25);
+          setProgress(Math.min(99, pct));
+          setStatus(`编码中... ${done}/${total} 帧`);
+        }
+      });
+    }
+    try {
+      await invoke("export_animation", { framesDir: tempDir, outputPath, options });
+    } finally {
+      if (unlistenProgress) unlistenProgress();
+    }
 
     setProgress(100);
     setStatus(`已导出至 ${outputPath}`);

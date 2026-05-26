@@ -1,7 +1,6 @@
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -125,10 +124,10 @@ pub fn get_video_info(path: String) -> Result<VideoInfo, String> {
         .map(|d| (d * 1000.0) as u64)
         .unwrap_or(0);
 
-    let file_size = json["format"]["size"]
-        .as_str()
-        .and_then(|s| s.parse::<u64>().ok())
-        .unwrap_or_else(|| fs::metadata(&path).map(|m| m.len()).unwrap_or(0));
+    // Always trust filesystem metadata. ffprobe's format.size can disagree
+    // with the on-disk size for certain MP4 containers (e.g., when moov
+    // atoms or trailing metadata are computed differently).
+    let file_size = fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
 
     Ok(VideoInfo { duration_ms, fps, width, height, file_size })
 }
@@ -162,13 +161,14 @@ pub fn save_frame_data(base64_data: String, temp_dir: String, index: u32) -> Res
 
 #[tauri::command]
 pub fn export_animation(
+    app: tauri::AppHandle,
     frames_dir: String,
     output_path: String,
     options: ExportOptions,
 ) -> Result<(), String> {
     if options.format == "ugoira" {
         let ug = options.ugoira.ok_or("ugoira options missing")?;
-        return export_ugoira(&frames_dir, &output_path, &ug);
+        return export_ugoira(&app, &frames_dir, &output_path, &ug);
     }
 
     let ffmpeg = find_ffmpeg()?;
@@ -210,7 +210,12 @@ pub fn export_animation(
     Ok(())
 }
 
-fn export_ugoira(frames_dir: &str, output_path: &str, opts: &UgoiraOptions) -> Result<(), String> {
+fn export_ugoira(app: &tauri::AppHandle, frames_dir: &str, output_path: &str, opts: &UgoiraOptions) -> Result<(), String> {
+    use tauri::Emitter;
+    // output_path is the destination *folder*. Create it; existing contents
+    // for the same frame indices will be overwritten by fs::write below.
+    fs::create_dir_all(output_path)
+        .map_err(|e| format!("Failed to create output folder: {}", e))?;
     let quality = opts.quality.clamp(1, 100);
     let delay = opts.delay_ms.max(1);
 
@@ -232,15 +237,11 @@ fn export_ugoira(frames_dir: &str, output_path: &str, opts: &UgoiraOptions) -> R
         return Err("No frames found".to_string());
     }
 
-    let file = fs::File::create(output_path)
-        .map_err(|e| format!("Failed to create zip: {}", e))?;
-    let mut zip = zip::ZipWriter::new(file);
-    let zip_opts: zip::write::SimpleFileOptions = zip::write::SimpleFileOptions::default()
-        .compression_method(zip::CompressionMethod::Stored);
-
     let scale_pct = opts.scale.clamp(1, 100);
-    let mut frames_meta = Vec::with_capacity(entries.len());
+    let total = entries.len();
+    let mut frames_meta = Vec::with_capacity(total);
     for (i, path) in entries.iter().enumerate() {
+        let _ = app.emit("ugoira-progress", serde_json::json!({ "done": i, "total": total }));
         let img = image::open(path).map_err(|e| format!("Failed to decode {:?}: {}", path, e))?;
         let img = if scale_pct < 100 {
             let (w, h) = (img.width(), img.height());
@@ -258,10 +259,9 @@ fn export_ugoira(frames_dir: &str, output_path: &str, opts: &UgoiraOptions) -> R
             .map_err(|e| format!("JPEG encode failed: {}", e))?;
 
         let entry_name = format!("{:06}.jpg", i);
-        zip.start_file(&entry_name, zip_opts)
-            .map_err(|e| format!("zip start_file: {}", e))?;
-        zip.write_all(&jpg_bytes)
-            .map_err(|e| format!("zip write: {}", e))?;
+        let dest = Path::new(output_path).join(&entry_name);
+        fs::write(&dest, &jpg_bytes)
+            .map_err(|e| format!("Failed to write {}: {}", entry_name, e))?;
         frames_meta.push(serde_json::json!({ "file": entry_name, "delay": delay }));
     }
 
@@ -270,11 +270,9 @@ fn export_ugoira(frames_dir: &str, output_path: &str, opts: &UgoiraOptions) -> R
         "mime_type": "image/jpeg",
         "frames": frames_meta,
     });
-    zip.start_file("animation.json", zip_opts)
-        .map_err(|e| format!("zip start_file: {}", e))?;
-    zip.write_all(manifest.to_string().as_bytes())
-        .map_err(|e| format!("zip write manifest: {}", e))?;
-    zip.finish().map_err(|e| format!("zip finish: {}", e))?;
+    let manifest_path = Path::new(output_path).join("animation.json");
+    fs::write(&manifest_path, manifest.to_string().as_bytes())
+        .map_err(|e| format!("Failed to write animation.json: {}", e))?;
     Ok(())
 }
 
@@ -320,6 +318,7 @@ fn build_gif_cmd(cmd: &mut Command, gif: &GifOptions, fps: f64) {
 
 #[tauri::command]
 pub fn estimate_size(
+    app: tauri::AppHandle,
     frames_dir: String,
     total_frames: u32,
     options: ExportOptions,
@@ -354,6 +353,7 @@ pub fn estimate_size(
     };
 
     let result = export_animation(
+        app,
         sample_dir.to_string_lossy().to_string(),
         temp_output.to_string_lossy().to_string(),
         sample_options,
@@ -496,6 +496,7 @@ pub async fn pick_save_path(
     app: tauri::AppHandle,
     default_name: String,
     format: String,
+    default_dir: Option<String>,
 ) -> Result<Option<String>, String> {
     use tauri_plugin_dialog::DialogExt;
 
@@ -504,18 +505,43 @@ pub async fn pick_save_path(
         "mp4" => "mp4",
         "webp" => "webp",
         "apng" => "png",
-        "ugoira" => "zip",
         _ => "gif",
     };
-    let label = if format == "ugoira" { "Ugoira (pixiv zip)".to_string() } else { format.to_uppercase() };
 
-    let result = app
+    let mut dialog = app
         .dialog()
         .file()
         .set_file_name(&default_name)
-        .add_filter(&label, &[ext])
-        .blocking_save_file();
+        .add_filter(&format.to_uppercase(), &[ext]);
+    if let Some(d) = default_dir.as_deref() {
+        let p = Path::new(d);
+        if p.is_dir() {
+            dialog = dialog.set_directory(p);
+        }
+    }
+    let result = dialog.blocking_save_file();
 
+    match result {
+        Some(path) => Ok(Some(path.to_string())),
+        None => Ok(None),
+    }
+}
+
+#[tauri::command]
+pub async fn pick_save_folder(
+    app: tauri::AppHandle,
+    default_dir: Option<String>,
+) -> Result<Option<String>, String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let mut dialog = app.dialog().file();
+    if let Some(d) = default_dir.as_deref() {
+        let p = Path::new(d);
+        if p.is_dir() {
+            dialog = dialog.set_directory(p);
+        }
+    }
+    let result = dialog.blocking_pick_folder();
     match result {
         Some(path) => Ok(Some(path.to_string())),
         None => Ok(None),

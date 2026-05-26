@@ -17,6 +17,7 @@ pub fn run() {
             conversion::cleanup_temp_dir,
             conversion::save_image,
             conversion::pick_save_path,
+            conversion::pick_save_folder,
             conversion::pick_open_file,
         ])
         .run(tauri::generate_context!())
