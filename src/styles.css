@@ -358,6 +358,56 @@ body {
   background: #181828;
 }
 
+.conv-preview-scroll {
+  position: relative;
+}
+
+.conv-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(17, 17, 27, 0.85);
+  z-index: 10;
+}
+
+.conv-loading-inner {
+  min-width: 320px;
+  padding: 18px 22px;
+  background: #1e1e2e;
+  border: 1px solid #313244;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.conv-loading-label {
+  color: #cdd6f4;
+  font-size: 14px;
+}
+
+.conv-loading-overlay .conv-progress-bar {
+  height: 10px;
+  background: #313244;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.conv-loading-overlay .conv-progress-fill {
+  height: 100%;
+  background: #89b4fa;
+  width: 0%;
+  transition: width 80ms ease-out;
+}
+
+.conv-loading-overlay #conv-loading-text {
+  color: #a6adc8;
+  font-size: 12px;
+  align-self: flex-end;
+}
+
 .conv-preview-scroll.empty .conv-canvas-wrapper {
   display: none;
 }

@@ -519,8 +519,8 @@ describe("conversion loading progress", () => {
   beforeEach(setup);
   afterEach(teardown);
 
-  it("loading section exists and is hidden by default", () => {
-    const el = document.getElementById("conv-loading-section");
+  it("loading overlay exists and is hidden by default", () => {
+    const el = document.getElementById("conv-loading-overlay");
     expect(el).not.toBeNull();
     expect(el.style.display).toBe("none");
   });

@@ -940,7 +940,25 @@ function showProgress(show) {
 }
 
 function showLoading(show) {
-  $("#conv-loading-section").style.display = show ? "" : "none";
+  const overlay = $("#conv-loading-overlay");
+  if (show) {
+    // Wipe previous frame from canvas so the in-progress reload doesn't
+    // sit on top of the old content peeking through under the overlay.
+    if (canvas && ctx) {
+      canvas.width = canvas.width; // hack to clear + reset
+    }
+    if (overlayCanvas && overlayCtx) {
+      overlayCanvas.width = overlayCanvas.width;
+    }
+    setLoadingProgress(0);
+    overlay.style.display = "";
+    // Hide the "click to open" hint while loading.
+    $("#conv-preview-scroll").classList.remove("empty");
+  } else {
+    overlay.style.display = "none";
+    // Re-apply empty hint if nothing loaded successfully.
+    if (state.frames.length === 0) $("#conv-preview-scroll").classList.add("empty");
+  }
 }
 
 function setLoadingProgress(pct) {

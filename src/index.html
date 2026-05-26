@@ -126,6 +126,15 @@
               <canvas id="conv-canvas"></canvas>
               <canvas id="conv-overlay-canvas"></canvas>
             </div>
+            <div class="conv-loading-overlay" id="conv-loading-overlay" style="display:none">
+              <div class="conv-loading-inner">
+                <div class="conv-loading-label">加载中...</div>
+                <div class="conv-progress-bar">
+                  <div class="conv-progress-fill" id="conv-loading-fill"></div>
+                </div>
+                <span id="conv-loading-text">0%</span>
+              </div>
+            </div>
           </div>
           <div class="conv-frame-controls">
             <button id="conv-btn-prev" title="上一帧">&lt;</button>
@@ -147,14 +156,6 @@
           <div class="conv-section conv-file-info" id="conv-file-info" style="display:none">
             <label class="conv-section-title">文件信息</label>
             <div class="conv-info-grid" id="conv-info-grid"></div>
-          </div>
-
-          <div class="conv-section" id="conv-loading-section" style="display:none">
-            <label>加载中...</label>
-            <div class="conv-progress-bar">
-              <div class="conv-progress-fill" id="conv-loading-fill"></div>
-            </div>
-            <span id="conv-loading-text">0%</span>
           </div>
 
           <div class="conv-section">
