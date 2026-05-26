@@ -1,6 +1,7 @@
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -24,10 +25,21 @@ pub struct GifOptions {
 }
 
 #[derive(Deserialize)]
+pub struct UgoiraOptions {
+    pub quality: u8,
+    pub delay_ms: u32,
+    #[serde(default = "default_scale")]
+    pub scale: u32,
+}
+
+fn default_scale() -> u32 { 100 }
+
+#[derive(Deserialize)]
 pub struct ExportOptions {
     pub format: String,
     pub fps: f64,
     pub gif: Option<GifOptions>,
+    pub ugoira: Option<UgoiraOptions>,
 }
 
 // ── Helper: find ffmpeg/ffprobe ─────────────────────────────────────────────
@@ -154,6 +166,11 @@ pub fn export_animation(
     output_path: String,
     options: ExportOptions,
 ) -> Result<(), String> {
+    if options.format == "ugoira" {
+        let ug = options.ugoira.ok_or("ugoira options missing")?;
+        return export_ugoira(&frames_dir, &output_path, &ug);
+    }
+
     let ffmpeg = find_ffmpeg()?;
     let input_pattern = Path::new(&frames_dir).join("frame_%05d.png");
 
@@ -190,6 +207,74 @@ pub fn export_animation(
     if !output.status.success() {
         return Err(format!("ffmpeg error: {}", String::from_utf8_lossy(&output.stderr)));
     }
+    Ok(())
+}
+
+fn export_ugoira(frames_dir: &str, output_path: &str, opts: &UgoiraOptions) -> Result<(), String> {
+    let quality = opts.quality.clamp(1, 100);
+    let delay = opts.delay_ms.max(1);
+
+    let mut entries: Vec<PathBuf> = fs::read_dir(frames_dir)
+        .map_err(|e| format!("Failed to read frames dir: {}", e))?
+        .filter_map(|e| {
+            let e = e.ok()?;
+            let name = e.file_name().to_string_lossy().to_string();
+            if name.starts_with("frame_") && name.ends_with(".png") {
+                Some(e.path())
+            } else {
+                None
+            }
+        })
+        .collect();
+    entries.sort();
+
+    if entries.is_empty() {
+        return Err("No frames found".to_string());
+    }
+
+    let file = fs::File::create(output_path)
+        .map_err(|e| format!("Failed to create zip: {}", e))?;
+    let mut zip = zip::ZipWriter::new(file);
+    let zip_opts: zip::write::SimpleFileOptions = zip::write::SimpleFileOptions::default()
+        .compression_method(zip::CompressionMethod::Stored);
+
+    let scale_pct = opts.scale.clamp(1, 100);
+    let mut frames_meta = Vec::with_capacity(entries.len());
+    for (i, path) in entries.iter().enumerate() {
+        let img = image::open(path).map_err(|e| format!("Failed to decode {:?}: {}", path, e))?;
+        let img = if scale_pct < 100 {
+            let (w, h) = (img.width(), img.height());
+            let nw = ((w as u64 * scale_pct as u64) / 100).max(1) as u32;
+            let nh = ((h as u64 * scale_pct as u64) / 100).max(1) as u32;
+            img.resize_exact(nw, nh, image::imageops::FilterType::Lanczos3)
+        } else {
+            img
+        };
+        let rgb = img.to_rgb8();
+        let mut jpg_bytes: Vec<u8> = Vec::new();
+        let mut encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut jpg_bytes, quality);
+        encoder
+            .encode(&rgb, rgb.width(), rgb.height(), image::ExtendedColorType::Rgb8)
+            .map_err(|e| format!("JPEG encode failed: {}", e))?;
+
+        let entry_name = format!("{:06}.jpg", i);
+        zip.start_file(&entry_name, zip_opts)
+            .map_err(|e| format!("zip start_file: {}", e))?;
+        zip.write_all(&jpg_bytes)
+            .map_err(|e| format!("zip write: {}", e))?;
+        frames_meta.push(serde_json::json!({ "file": entry_name, "delay": delay }));
+    }
+
+    let manifest = serde_json::json!({
+        "ugoira_version": "0.0.1",
+        "mime_type": "image/jpeg",
+        "frames": frames_meta,
+    });
+    zip.start_file("animation.json", zip_opts)
+        .map_err(|e| format!("zip start_file: {}", e))?;
+    zip.write_all(manifest.to_string().as_bytes())
+        .map_err(|e| format!("zip write manifest: {}", e))?;
+    zip.finish().map_err(|e| format!("zip finish: {}", e))?;
     Ok(())
 }
 
@@ -244,7 +329,11 @@ pub fn estimate_size(
         return Ok(0);
     }
 
-    let temp_output = Path::new(&frames_dir).join("_estimate_sample.gif");
+    let sample_ext = match options.format.as_str() {
+        "ugoira" => "zip",
+        other => other,
+    };
+    let temp_output = Path::new(&frames_dir).join(format!("_estimate_sample.{}", sample_ext));
 
     let sample_dir = Path::new(&frames_dir).join("_sample");
     fs::create_dir_all(&sample_dir).map_err(|e| format!("Failed to create sample dir: {}", e))?;
@@ -261,6 +350,7 @@ pub fn estimate_size(
         format: options.format,
         fps: options.fps,
         gif: options.gif,
+        ugoira: options.ugoira,
     };
 
     let result = export_animation(
@@ -414,14 +504,16 @@ pub async fn pick_save_path(
         "mp4" => "mp4",
         "webp" => "webp",
         "apng" => "png",
+        "ugoira" => "zip",
         _ => "gif",
     };
+    let label = if format == "ugoira" { "Ugoira (pixiv zip)".to_string() } else { format.to_uppercase() };
 
     let result = app
         .dialog()
         .file()
         .set_file_name(&default_name)
-        .add_filter(&format.to_uppercase(), &[ext])
+        .add_filter(&label, &[ext])
         .blocking_save_file();
 
     match result {

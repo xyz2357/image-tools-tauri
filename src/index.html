@@ -161,6 +161,7 @@
               <option value="mp4">MP4</option>
               <option value="webp">WebP</option>
               <option value="apng">APNG</option>
+              <option value="ugoira">Ugoira (pixiv .zip)</option>
             </select>
           </div>
 
@@ -190,6 +191,39 @@
             <div class="conv-row">
               <label>帧率: <span id="conv-fps-val">15</span></label>
               <input type="range" id="conv-fps" min="1" max="60" value="15" step="1" />
+            </div>
+          </div>
+
+          <div class="conv-section conv-ugoira-options" id="conv-ugoira-options" style="display:none">
+            <div class="conv-row">
+              <label>JPEG 质量: <span id="conv-ugoira-quality-val">85</span></label>
+              <input type="range" id="conv-ugoira-quality" min="40" max="100" value="85" step="1" />
+            </div>
+            <div class="conv-row">
+              <label>缩放:</label>
+              <select id="conv-ugoira-scale">
+                <option value="100">100%</option>
+                <option value="75">75%</option>
+                <option value="50" selected>50%</option>
+                <option value="33">33%</option>
+                <option value="custom">自定义...</option>
+              </select>
+              <input type="number" id="conv-ugoira-scale-custom" min="1" max="100" value="50" style="width:60px; display:none" />
+              <label id="conv-ugoira-scale-pct-label" style="display:none">%</label>
+            </div>
+            <div class="conv-row">
+              <label>帧延迟:</label>
+              <select id="conv-ugoira-delay">
+                <option value="33">33 ms (~30 fps)</option>
+                <option value="50" selected>50 ms (20 fps)</option>
+                <option value="100">100 ms (10 fps)</option>
+                <option value="custom">自定义...</option>
+              </select>
+              <input type="number" id="conv-ugoira-delay-custom" min="1" max="10000" value="50" style="width:70px; display:none" />
+              <label id="conv-ugoira-delay-ms-label" style="display:none">ms</label>
+            </div>
+            <div class="conv-ugoira-hint" style="font-size:12px; opacity:0.7; margin-top:6px">
+              pixiv 限制：总帧数 ≤ 250，单帧 ≤ 1920×1080，zip ≤ 100MB。上传时 pixiv 网页会让你确认 / 修改帧延迟。
             </div>
           </div>
 

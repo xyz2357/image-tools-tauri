@@ -166,9 +166,9 @@ describe("conversion format selector", () => {
   beforeEach(setup);
   afterEach(teardown);
 
-  it("format selector has 4 options", () => {
+  it("format selector has 5 options", () => {
     const sel = document.getElementById("conv-format");
-    expect(sel.options.length).toBe(4);
+    expect(sel.options.length).toBe(5);
   });
 
   it("format selector has all expected formats", () => {
@@ -178,6 +178,25 @@ describe("conversion format selector", () => {
     expect(values).toContain("mp4");
     expect(values).toContain("webp");
     expect(values).toContain("apng");
+    expect(values).toContain("ugoira");
+  });
+
+  it("ugoira quality slider exists with default 85", () => {
+    const slider = document.getElementById("conv-ugoira-quality");
+    expect(slider).not.toBeNull();
+    expect(slider.value).toBe("85");
+  });
+
+  it("ugoira delay select has the four preset options", () => {
+    const sel = document.getElementById("conv-ugoira-delay");
+    expect(sel).not.toBeNull();
+    const values = Array.from(sel.options).map((o) => o.value);
+    expect(values).toEqual(["33", "50", "100", "custom"]);
+    expect(sel.value).toBe("50");
+  });
+
+  it("ugoira options panel is hidden by default", () => {
+    expect(document.getElementById("conv-ugoira-options").style.display).toBe("none");
   });
 
   it("default format is GIF", () => {

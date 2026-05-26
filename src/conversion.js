@@ -64,6 +64,12 @@ export function initConversion() {
   $("#conv-dither").addEventListener("change", switchToCustomPreset);
   $("#conv-diff-palette").addEventListener("change", switchToCustomPreset);
 
+  $("#conv-ugoira-quality").addEventListener("input", (e) => {
+    $("#conv-ugoira-quality-val").textContent = e.target.value;
+  });
+  $("#conv-ugoira-delay").addEventListener("change", onUgoiraDelayChange);
+  $("#conv-ugoira-scale").addEventListener("change", onUgoiraScaleChange);
+
   // Mosaic controls
   $("#conv-mosaic-enable").addEventListener("change", (e) => {
     $("#conv-mosaic-options").style.display = e.target.checked ? "" : "none";
@@ -392,9 +398,38 @@ function switchToCustomPreset() {
 function onFormatChange() {
   const fmt = $("#conv-format").value;
   const gifOnly = fmt === "gif";
+  const ugoiraOnly = fmt === "ugoira";
   $("#conv-gif-options").style.display = gifOnly ? "" : "none";
   $("#conv-preset-section").style.display = gifOnly ? "" : "none";
-  $("#conv-btn-estimate").style.display = gifOnly ? "" : "none";
+  $("#conv-btn-estimate").style.display = (gifOnly || ugoiraOnly) ? "" : "none";
+  $("#conv-ugoira-options").style.display = ugoiraOnly ? "" : "none";
+}
+
+function onUgoiraDelayChange() {
+  const isCustom = $("#conv-ugoira-delay").value === "custom";
+  $("#conv-ugoira-delay-custom").style.display = isCustom ? "" : "none";
+  $("#conv-ugoira-delay-ms-label").style.display = isCustom ? "" : "none";
+}
+
+function onUgoiraScaleChange() {
+  const isCustom = $("#conv-ugoira-scale").value === "custom";
+  $("#conv-ugoira-scale-custom").style.display = isCustom ? "" : "none";
+  $("#conv-ugoira-scale-pct-label").style.display = isCustom ? "" : "none";
+}
+
+function getUgoiraDelayMs() {
+  const sel = $("#conv-ugoira-delay").value;
+  if (sel === "custom") return Math.max(1, parseInt($("#conv-ugoira-delay-custom").value) || 50);
+  return parseInt(sel);
+}
+
+function getUgoiraScalePct() {
+  const sel = $("#conv-ugoira-scale").value;
+  if (sel === "custom") {
+    const v = parseInt($("#conv-ugoira-scale-custom").value) || 100;
+    return Math.max(1, Math.min(100, v));
+  }
+  return parseInt(sel);
 }
 
 function setSelectValue(selector, value) {
@@ -419,6 +454,12 @@ function getExportOptions() {
       scale: parseInt($("#conv-scale").value),
       diff_palette: $("#conv-diff-palette").checked,
     };
+  } else if (format === "ugoira") {
+    options.ugoira = {
+      quality: parseInt($("#conv-ugoira-quality").value),
+      delay_ms: getUgoiraDelayMs(),
+      scale: getUgoiraScalePct(),
+    };
   }
   return options;
 }
@@ -440,6 +481,11 @@ async function exportAnimation() {
     return;
   }
 
+  if (format === "ugoira" && exportFrames.length > 250) {
+    const ok = confirm(`Ugoira 帧数 ${exportFrames.length} 超过 pixiv 上限 250 帧。仍要导出吗？（可上传别处，但 pixiv 会拒绝）`);
+    if (!ok) return;
+  }
+
   if (!invoke) {
     setStatus("导出需要 Tauri 运行时 (ffmpeg)");
     return;
@@ -447,7 +493,8 @@ async function exportAnimation() {
 
   let outputPath;
   try {
-    const defaultName = `output.${format === "apng" ? "png" : format}`;
+    const extByFormat = { gif: "gif", mp4: "mp4", webp: "webp", apng: "png", ugoira: "zip" };
+    const defaultName = `output.${extByFormat[format] || format}`;
     outputPath = await invoke("pick_save_path", { defaultName, format });
     if (!outputPath) return;
   } catch (e) {
