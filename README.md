@@ -16,22 +16,13 @@
 
 图片效果都是真机器输出（`scripts/gen-samples.mjs` 通过 Playwright 驱动应用本身生成，然后 ffmpeg 压成小 JPG）。
 
-### 视频
+### 视频（单帧截图）
 
-<table>
-  <tr>
-    <th>原视频</th>
-    <th>马赛克</th>
-    <th>模糊</th>
-  </tr>
-  <tr>
-    <td><video src="docs/samples/vid-original.mp4" controls autoplay loop muted width="220"></video></td>
-    <td><video src="docs/samples/vid-mosaic.mp4" controls autoplay loop muted width="220"></video></td>
-    <td><video src="docs/samples/vid-blur.mp4" controls autoplay loop muted width="220"></video></td>
-  </tr>
-</table>
+| 原视频帧 | 马赛克 | 模糊 |
+|---|---|---|
+| <img src="docs/samples/vid-original.jpg" width="220" /> | <img src="docs/samples/vid-mosaic.jpg" width="220" /> | <img src="docs/samples/vid-blur.jpg" width="220" /> |
 
-视频示例由 ffmpeg 近似生成（应用本身可对选定区域 + 任意子帧范围应用同样的效果）。
+视频示例展示的是 sample.mp4 第 2 秒处单帧上效果叠加的样子。在实际应用里可对子帧范围 + 选定区域应用同样的效果。
 
 ## 功能
 

@@ -129,35 +129,24 @@ async function generate() {
     });
   });
 
-  // Video samples — straight ffmpeg pipeline since the conv tab's
-  // per-frame Playwright route is far slower than ffmpeg approximations
-  // and the resulting effect is visually equivalent to the app's mosaic.
-  console.log("video samples (ffmpeg)");
+  // Video samples — extract a single frame at 2s of sample.mp4 with
+  // each effect applied. README links to JPGs (cheaper to render
+  // inline on GitHub than autoplaying MP4s).
+  console.log("video samples (ffmpeg, single frame)");
   const vidIn = path.join(root, "sample.mp4");
 
-  // Original (compressed)
-  spawnSyncOrThrow("ffmpeg", [
-    "-y", "-i", vidIn, "-t", "4",
-    "-vf", "fps=12,scale=240:-1",
-    "-c:v", "libx264", "-crf", "28", "-an", "-movflags", "+faststart",
-    path.join(outDir, "vid-original.mp4"),
-  ]);
-
-  // Mosaic — pixelate via scale-down/scale-up with neighbor sampling.
-  spawnSyncOrThrow("ffmpeg", [
-    "-y", "-i", vidIn, "-t", "4",
-    "-vf", "fps=12,scale=iw/14:ih/14,scale=iw*14:ih*14:flags=neighbor,scale=240:-1",
-    "-c:v", "libx264", "-crf", "28", "-an", "-movflags", "+faststart",
-    path.join(outDir, "vid-mosaic.mp4"),
-  ]);
-
-  // Blur — boxblur stand-in for the app's directional motion blur.
-  spawnSyncOrThrow("ffmpeg", [
-    "-y", "-i", vidIn, "-t", "4",
-    "-vf", "fps=12,boxblur=12:1,scale=240:-1",
-    "-c:v", "libx264", "-crf", "28", "-an", "-movflags", "+faststart",
-    path.join(outDir, "vid-blur.mp4"),
-  ]);
+  const vidFilters = {
+    original: "scale=480:-1",
+    mosaic: "scale=iw/14:ih/14,scale=iw*14:ih*14:flags=neighbor,scale=480:-1",
+    blur: "boxblur=12:1,scale=480:-1",
+  };
+  for (const [name, vf] of Object.entries(vidFilters)) {
+    spawnSyncOrThrow("ffmpeg", [
+      "-y", "-ss", "00:00:02", "-i", vidIn, "-frames:v", "1",
+      "-vf", vf, "-q:v", "5",
+      path.join(outDir, `vid-${name}.jpg`),
+    ]);
+  }
 
   console.log("Wrote " + outDir);
 }
