@@ -36,6 +36,9 @@ jobs:
       - name: Build (exe only, no installer)
         run: npx tauri build --no-bundle
 
+      - name: E2E (Playwright via WebView2 CDP)
+        run: npm run e2e
+
       - name: Stage and zip exe
         shell: pwsh
         run: |
