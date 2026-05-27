@@ -709,4 +709,41 @@ window.addEventListener("DOMContentLoaded", () => {
   window.__convRedo = convApi.redo;
   window.__convReset = convApi.resetEffects;
   window.__convOpenFile = convApi.openFile;
+
+  // Test / sample-generation hooks. Lets scripts drive the image-tools
+  // tab without going through the native file dialog: inject a base64
+  // PNG, set a full-canvas selection, then trigger the normal apply
+  // buttons. Used by scripts/gen-samples.mjs.
+  window.__mainTest = {
+    loadImage(base64) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          state.image = img;
+          state.history = [];
+          state.redoHistory = [];
+          state.selectionPoly = [];
+          state.textLayers = [];
+          state.selectedTextId = null;
+          drawImage(img);
+          resolve();
+        };
+        img.onerror = reject;
+        img.src = "data:image/png;base64," + base64;
+      });
+    },
+    setSelectionFull() {
+      const w = mainCanvas.width, h = mainCanvas.height;
+      state.selectionPoly = [{x:0,y:0},{x:w,y:0},{x:w,y:h},{x:0,y:h}];
+    },
+    getCompositeDataURL() {
+      const comp = document.createElement("canvas");
+      comp.width = mainCanvas.width;
+      comp.height = mainCanvas.height;
+      const cc = comp.getContext("2d");
+      cc.drawImage(mainCanvas, 0, 0);
+      cc.drawImage(textCanvas, 0, 0);
+      return comp.toDataURL("image/png");
+    },
+  };
 });

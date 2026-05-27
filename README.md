@@ -2,6 +2,37 @@
 
 一个基于 Tauri v2 + 原生 HTML/CSS/JS 的桌面图片处理工具，是 [image_tools](https://github.com/xyz2357/image_tools)（Python 版本）的重写。
 
+## 效果示例
+
+### 图片
+
+| 原图 | 马赛克 | 文字图层 |
+|---|---|---|
+| <img src="docs/samples/img-original.jpg" width="220" /> | <img src="docs/samples/img-mosaic.jpg" width="220" /> | <img src="docs/samples/img-text.jpg" width="220" /> |
+
+| 方向性模糊 | 相机叠加 |
+|---|---|
+| <img src="docs/samples/img-blur.jpg" width="220" /> | <img src="docs/samples/img-camera.jpg" width="220" /> |
+
+图片效果都是真机器输出（`scripts/gen-samples.mjs` 通过 Playwright 驱动应用本身生成，然后 ffmpeg 压成小 JPG）。
+
+### 视频
+
+<table>
+  <tr>
+    <th>原视频</th>
+    <th>马赛克</th>
+    <th>模糊</th>
+  </tr>
+  <tr>
+    <td><video src="docs/samples/vid-original.mp4" controls autoplay loop muted width="220"></video></td>
+    <td><video src="docs/samples/vid-mosaic.mp4" controls autoplay loop muted width="220"></video></td>
+    <td><video src="docs/samples/vid-blur.mp4" controls autoplay loop muted width="220"></video></td>
+  </tr>
+</table>
+
+视频示例由 ffmpeg 近似生成（应用本身可对选定区域 + 任意子帧范围应用同样的效果）。
+
 ## 功能
 
 ### 图片工具

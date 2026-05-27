@@ -39,6 +39,7 @@ Thumbs.db
 *.png
 !src-tauri/icons/**
 !src/assets/**
+!docs/samples/**
 
 # Legacy Python files
 ui/
