@@ -619,3 +619,36 @@ pub async fn pick_open_file(app: tauri::AppHandle) -> Result<Option<String>, Str
         None => Ok(None),
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    // Regression: cleanup_orphan_temp_dirs should remove other-PID dirs
+    // but never touch the current PIDs own dir or unrelated entries.
+    #[test]
+    fn cleanup_orphan_temp_dirs_leaves_own_pid_alone() {
+        let tmp = std::env::temp_dir();
+        let me = std::process::id();
+        let my_dir = tmp.join(format!("image_tools_{}", me));
+        let orphan = tmp.join(format!("image_tools_{}", me.wrapping_add(1_000_000)));
+        let unrelated = tmp.join("not_our_prefix_test_dir");
+        for p in [&my_dir, &orphan, &unrelated] {
+            let _ = fs::remove_dir_all(p);
+            fs::create_dir_all(p).unwrap();
+        }
+
+        cleanup_orphan_temp_dirs();
+
+        assert!(my_dir.exists(), "own PID dir must survive");
+        assert!(!orphan.exists(), "other-PID image_tools dir must be deleted");
+        assert!(unrelated.exists(), "non-matching dir must be untouched");
+
+        // Cleanup
+        for p in [&my_dir, &unrelated] {
+            let _ = fs::remove_dir_all(p);
+        }
+    }
+}

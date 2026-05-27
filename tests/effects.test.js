@@ -218,6 +218,46 @@ describe("addMsToTime", () => {
     const result = addMsToTime("00:59:59.999", 1);
     expect(result).toBe("01:00:00.000");
   });
+
+  // ── Boundary regressions ─────────────────────────────────────────────────
+  // The "00:00:00.066666666666666667" formatting bug shipped because
+  // every test above used integer ms. msToAdd is in practice 1000/fps,
+  // which is fractional whenever fps doesn't divide 1000 evenly. Make
+  // sure each frame index at common fractional fps formats to whole ms.
+
+  it("rounds fractional msToAdd to whole milliseconds (15fps)", () => {
+    // 1000/15 ≈ 66.666… — frame 1 should be ~67ms, not 66.6666….
+    const out = addMsToTime("00:00:00.000", 1000 / 15);
+    expect(out).toMatch(/^\d{2}:\d{2}:\d{2}\.\d{3}$/);
+    expect(out).not.toContain("6666");
+  });
+
+  it("handles a long sequence of fractional adds at 24fps", () => {
+    // Frame 100 at 24fps = ~4166.666ms — must format cleanly.
+    const out = addMsToTime("00:00:00.000", (100 * 1000) / 24);
+    expect(out).toMatch(/^00:00:0[34]\.\d{3}$/);
+  });
+
+  it("never produces more than 3 fractional digits", () => {
+    for (const fps of [15, 23.976, 24, 29.97, 60]) {
+      for (const frame of [1, 7, 13, 99, 1234]) {
+        const out = addMsToTime("00:00:00.000", (frame * 1000) / fps);
+        const ms = out.split(".")[1];
+        expect(ms.length).toBe(3);
+        expect(/^\d{3}$/.test(ms)).toBe(true);
+      }
+    }
+  });
+
+  it("handles a tiny fractional delta near zero", () => {
+    expect(addMsToTime("00:00:00.000", 0.4)).toBe("00:00:00.000");
+    expect(addMsToTime("00:00:00.000", 0.6)).toBe("00:00:00.001");
+  });
+
+  it("handles a huge delta (multi-hour) without overflow", () => {
+    // 5h25m13.500s
+    expect(addMsToTime("00:00:00.000", 5 * 3600000 + 25 * 60000 + 13500)).toBe("05:25:13.500");
+  });
 });
 
 // ── getBatteryColor ─────────────────────────────────────────────────────────

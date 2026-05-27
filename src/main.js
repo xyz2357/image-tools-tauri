@@ -2,6 +2,7 @@ import {
   mosaicPixels, blurPixels, getPolyBounds, drawCameraOverlay,
 } from "./effects.js";
 import { initConversion } from "./conversion.js";
+import { initTabs as initTabsShared } from "./tab-init.js";
 
 // ── State ────────────────────────────────────────────────────────────────────
 
@@ -33,20 +34,11 @@ const fileInput = $("#file-input");
 
 // ── Tab switching ───────────────────────────────────────────────────────────
 
+// Thin wrapper so main.js doesn't have to pass `document` every time;
+// the shared implementation lives in ./tab-init.js so tests can import
+// the exact same code instead of maintaining a parallel copy.
 function initTabs(barSelector, contentPrefix) {
-  const bar = $(barSelector);
-  if (!bar) return;
-  bar.addEventListener("click", (e) => {
-    const btn = e.target.closest(".tab-btn, .pill-btn");
-    if (!btn || btn.disabled) return;
-    bar.querySelectorAll(".tab-btn, .pill-btn").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    const key = btn.dataset.tab || btn.dataset.tool;
-    const parent = bar.parentElement;
-    parent.querySelectorAll(`:scope > [id^="${contentPrefix}"]`).forEach((el) => {
-      el.classList.toggle("active", el.id === `${contentPrefix}${key}`);
-    });
-  });
+  return initTabsShared(document, barSelector, contentPrefix);
 }
 
 // ── Canvas helpers ──────────────────────────────────────────────────────────
@@ -662,7 +654,10 @@ window.addEventListener("DOMContentLoaded", () => {
     if (document.body.classList.contains("tab-image")) undo();
     else if (window.__convUndo) window.__convUndo();
   });
-  $("#btn-redo").addEventListener("click", redo);
+  $("#btn-redo").addEventListener("click", () => {
+    if (document.body.classList.contains("tab-image")) redo();
+    else if (window.__convRedo) window.__convRedo();
+  });
   $("#btn-reset").addEventListener("click", () => {
     if (document.body.classList.contains("tab-image")) resetImage();
     else if (window.__convReset) window.__convReset();
@@ -711,6 +706,7 @@ window.addEventListener("DOMContentLoaded", () => {
   // Conversion tab
   const convApi = initConversion();
   window.__convUndo = convApi.undo;
+  window.__convRedo = convApi.redo;
   window.__convReset = convApi.resetEffects;
   window.__convOpenFile = convApi.openFile;
 });

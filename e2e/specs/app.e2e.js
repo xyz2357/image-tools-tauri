@@ -127,6 +127,91 @@ test("clicking the empty image-tools canvas triggers the file picker", async ({ 
   expect(clicks).toBe(1);
 });
 
+// ── Thumb strip (uses test hook to simulate loaded frames) ─────────────────
+// Regression for the clientWidth=0-at-render bug that caused the strip
+// to show only a single thumb. With real layout, ~12-15 thumbs should
+// fit; we assert "more than one" to keep the bound portable.
+
+test("thumb strip renders multiple thumbs when many frames are loaded", async ({ appPage: page }) => {
+  await gotoConversion(page);
+  await page.evaluate(async () => {
+    window.__convTest.populateFakeFrames(100);
+    window.__convTest.renderThumbStrip();
+    // Wait two rAFs so the renderThumbStrip's requestAnimationFrame fires
+    // and the resulting DOM update is laid out.
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
+  const count = await page.locator("#conv-thumb-strip canvas").count();
+  expect(count).toBeGreaterThan(1);
+  expect(count).toBeLessThanOrEqual(100);
+  await page.evaluate(() => window.__convTest.reset());
+});
+
+test("thumb strip samples evenly and never shows more thumbs than frames", async ({ appPage: page }) => {
+  await gotoConversion(page);
+  // Tiny frame count: every frame should get its own thumb (capped by
+  // total frames, not by fit count).
+  await page.evaluate(async () => {
+    window.__convTest.populateFakeFrames(3);
+    window.__convTest.renderThumbStrip();
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
+  const indices = await page.locator("#conv-thumb-strip canvas").evaluateAll((els) =>
+    els.map((e) => parseInt(e.dataset.frame))
+  );
+  expect(indices).toEqual([0, 1, 2]);
+  await page.evaluate(() => window.__convTest.reset());
+});
+
+test("clicking a thumb seeks to that frame", async ({ appPage: page }) => {
+  await gotoConversion(page);
+  await page.evaluate(async () => {
+    window.__convTest.populateFakeFrames(50);
+    window.__convTest.renderThumbStrip();
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
+  // Click the last thumb.
+  const last = page.locator("#conv-thumb-strip canvas").last();
+  const targetFrame = parseInt(await last.getAttribute("data-frame"));
+  await last.click();
+  const current = await page.evaluate(() => window.__convTest.getCurrentFrame());
+  expect(current).toBe(targetFrame);
+  await expect(last).toHaveClass(/active/);
+  await page.evaluate(() => window.__convTest.reset());
+});
+
+// ── Layout regressions (real rendering, not jsdom) ─────────────────────────
+
+test("tall portrait video doesn't get its top clipped by flex centering", async ({ appPage: page }) => {
+  // Regression for the `align-items: center` overflow bug: a 1080×1920
+  // frame is taller than the preview area, so without `safe center`
+  // the top half sits in un-scrollable negative margin and you can
+  // never see frame.top in the viewport.
+  await gotoConversion(page);
+  await page.evaluate(async () => {
+    window.__convTest.populateFakeFrames(2, 1080, 1920);
+    window.__convTest.updatePreview();
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
+  const layout = await page.evaluate(() => {
+    const c = document.querySelector("#conv-canvas");
+    const s = document.querySelector("#conv-preview-scroll");
+    s.scrollTop = 0;
+    return {
+      canvasH: c.height,
+      scrollH: s.scrollHeight,
+      clientH: s.clientHeight,
+      canvasTopOffset: c.getBoundingClientRect().top - s.getBoundingClientRect().top,
+    };
+  });
+  expect(layout.canvasH).toBe(1920);
+  expect(layout.scrollH).toBeGreaterThan(layout.clientH); // it overflows
+  // With safe-center fallback, the canvas top is at or below the scroll
+  // viewport top (>= 0). Buggy `center` would put it at a negative offset.
+  expect(layout.canvasTopOffset).toBeGreaterThanOrEqual(0);
+  await page.evaluate(() => window.__convTest.reset());
+});
+
 // ── Window title ────────────────────────────────────────────────────────────
 
 test("window title is 图片工具", async ({ appPage: page }) => {

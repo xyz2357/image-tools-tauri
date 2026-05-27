@@ -21,6 +21,7 @@ const state = {
   mosaicStart: null,
   playTimer: null,
   history: [],
+  redoHistory: [],
 };
 
 const HISTORY_LIMIT = 30;
@@ -33,28 +34,43 @@ function pushHistory(start, end) {
   for (let i = start; i < end; i++) oldFrames.push(state.frames[i]);
   state.history.push({ start, oldFrames });
   if (state.history.length > HISTORY_LIMIT) state.history.shift();
-  refreshUndoButton();
+  // Any new edit invalidates the redo branch.
+  state.redoHistory = [];
 }
 
 function undo() {
   const entry = state.history.pop();
   if (!entry) return;
+  // Snapshot what's currently there so redo can put it back.
+  const redoFrames = [];
   for (let i = 0; i < entry.oldFrames.length; i++) {
+    redoFrames.push(state.frames[entry.start + i]);
     state.frames[entry.start + i] = entry.oldFrames[i];
   }
-  refreshUndoButton();
+  state.redoHistory.push({ start: entry.start, oldFrames: redoFrames });
+  renderThumbStrip();
   updatePreview();
   setStatus("已撤销");
 }
 
-function clearHistory() {
-  state.history = [];
-  refreshUndoButton();
+function redo() {
+  const entry = state.redoHistory.pop();
+  if (!entry) return;
+  const undoFrames = [];
+  for (let i = 0; i < entry.oldFrames.length; i++) {
+    undoFrames.push(state.frames[entry.start + i]);
+    state.frames[entry.start + i] = entry.oldFrames[i];
+  }
+  state.history.push({ start: entry.start, oldFrames: undoFrames });
+  if (state.history.length > HISTORY_LIMIT) state.history.shift();
+  renderThumbStrip();
+  updatePreview();
+  setStatus("已重做");
 }
 
-function refreshUndoButton() {
-  // The undo button now lives in the shared top toolbar (#btn-undo) and
-  // applies to whichever tab is active. main.js handles its disabled state.
+function clearHistory() {
+  state.history = [];
+  state.redoHistory = [];
 }
 
 function refreshMosaicButtons() {
@@ -86,7 +102,26 @@ export function initConversion() {
   $("#conv-btn-prev").addEventListener("click", () => seekFrame(state.currentFrame - 1));
   $("#conv-btn-next").addEventListener("click", () => seekFrame(state.currentFrame + 1));
   $("#conv-btn-play").addEventListener("click", togglePlay);
-  $("#conv-frame-slider").addEventListener("input", (e) => seekFrame(parseInt(e.target.value)));
+  // Click anywhere on the thumb strip to seek; event delegation so we
+  // don't have to re-bind every time we re-render the thumbs.
+  $("#conv-thumb-strip").addEventListener("click", (e) => {
+    const c = e.target.closest("canvas[data-frame]");
+    if (c) seekFrame(parseInt(c.dataset.frame));
+  });
+  // Re-render whenever the strip's width changes. Catches three cases:
+  // (a) initial layout after onFramesLoaded fires synchronously,
+  // (b) window resize, (c) any future panel/sidebar resize.
+  const strip = $("#conv-thumb-strip");
+  let lastWidth = 0;
+  new ResizeObserver(() => {
+    if (state.frames.length === 0) return;
+    const w = strip.clientWidth;
+    // Skip noise — only re-render when the count of thumbs that fit
+    // could plausibly change.
+    if (Math.abs(w - lastWidth) < THUMB_W + THUMB_GAP) return;
+    lastWidth = w;
+    renderThumbStrip();
+  }).observe(strip);
 
   $("#conv-format").addEventListener("change", onFormatChange);
   $("#conv-preset").addEventListener("change", onPresetChange);
@@ -175,16 +210,58 @@ export function initConversion() {
     } else if (e.ctrlKey && (e.key === "z" || e.key === "Z") && !e.shiftKey) {
       e.preventDefault();
       undo();
+    } else if (e.ctrlKey && e.shiftKey && (e.key === "z" || e.key === "Z")) {
+      e.preventDefault();
+      redo();
     }
   });
 
   applyPreset("extreme");
   onFormatChange();
 
+  // Test-only hooks for e2e: simulate having frames loaded without
+  // actually decoding a file. Exposed on window so Playwright's
+  // page.evaluate can reach them. Cheap to leave in production —
+  // image-tools is a desktop app, not security-sensitive.
+  if (typeof window !== "undefined") {
+    window.__convTest = {
+      populateFakeFrames(count, w = 1280, h = 720) {
+        const frames = [];
+        for (let i = 0; i < count; i++) {
+          const c = document.createElement("canvas");
+          c.width = w; c.height = h;
+          // Fill with a frame-index gradient so each thumb looks distinct.
+          const cc = c.getContext("2d");
+          const hue = Math.floor((i * 360) / count);
+          cc.fillStyle = `hsl(${hue}, 70%, 40%)`;
+          cc.fillRect(0, 0, w, h);
+          frames.push(c);
+        }
+        state.frames = frames;
+        state.currentFrame = 0;
+        // The preview-scroll's `.empty` class hides the canvas wrapper;
+        // production code clears it in onFramesLoaded(). Mirror that here
+        // so the canvas is actually laid out in the scroll area.
+        $("#conv-preview-scroll").classList.remove("empty");
+      },
+      renderThumbStrip,
+      updatePreview,
+      getCurrentFrame: () => state.currentFrame,
+      reset() {
+        state.frames = [];
+        state.currentFrame = 0;
+        $("#conv-thumb-strip").innerHTML = "";
+        $("#conv-canvas").width = 0;
+        $("#conv-preview-scroll").classList.add("empty");
+      },
+    };
+  }
+
   // API exposed to main.js's shared top toolbar dispatcher.
   return {
     openFile,
     undo,
+    redo,
     resetEffects,
     hasFrames: () => state.frames.length > 0,
     historyDepth: () => state.history.length,
@@ -250,6 +327,7 @@ async function openFile() {
 async function loadFromPath(path) {
   stopPlay();
   clearHistory();
+  $("#conv-thumb-strip").innerHTML = "";
   // Show loading overlay immediately so the user sees something even
   // during the (often slow) ffprobe + ffmpeg phase. Progress sits at
   // 5% during metadata probe, 20% while ffmpeg extracts frames, then
@@ -306,6 +384,7 @@ async function loadImageFromPath(filePath) {
 async function loadFromFile(file) {
   stopPlay();
   clearHistory();
+  $("#conv-thumb-strip").innerHTML = "";
   state.sourceFile = file;
   state.sourcePath = file.name;
   setStatus("加载帧中...");
@@ -442,8 +521,6 @@ function onFramesLoaded() {
 
   const last = state.frames.length - 1;
   state.currentFrame = 0;
-  $("#conv-frame-slider").max = last;
-  $("#conv-frame-slider").value = 0;
   $("#conv-start-frame").value = 0;
   $("#conv-start-frame").max = last;
   $("#conv-end-frame").value = last;
@@ -453,7 +530,64 @@ function onFramesLoaded() {
   $("#conv-btn-estimate").disabled = false;
   // (#conv-btn-reset-effects removed — reset is now the shared toolbar button)
 
+  renderThumbStrip();
   updatePreview();
+}
+
+// Render evenly-sampled thumbnails into the strip — only as many as fit
+// the strip's current width without scrolling. Each thumb represents a
+// frame; clicking jumps directly to that frame index. The current frame
+// highlights whichever sampled thumb is closest.
+const THUMB_W = 64, THUMB_H = 36, THUMB_GAP = 2;
+
+function renderThumbStrip() {
+  // Defer to after the next layout so clientWidth is settled. Without
+  // this, calls fired synchronously from onFramesLoaded see clientWidth=0
+  // and render only a single thumb. requestAnimationFrame guarantees the
+  // measurement happens after the browser has flushed layout.
+  requestAnimationFrame(doRenderThumbStrip);
+}
+
+function doRenderThumbStrip() {
+  const strip = $("#conv-thumb-strip");
+  strip.innerHTML = "";
+  if (state.frames.length === 0) return;
+  const styles = getComputedStyle(strip);
+  const padL = parseFloat(styles.paddingLeft) || 0;
+  const padR = parseFloat(styles.paddingRight) || 0;
+  const availableW = Math.max(0, strip.clientWidth - padL - padR);
+  const maxThumbs = Math.max(1, Math.floor((availableW + THUMB_GAP) / (THUMB_W + THUMB_GAP)));
+  const N = Math.min(state.frames.length, maxThumbs);
+  for (let i = 0; i < N; i++) {
+    const frameIdx = N === 1 ? 0 : Math.round((i * (state.frames.length - 1)) / (N - 1));
+    const c = document.createElement("canvas");
+    c.width = THUMB_W;
+    c.height = THUMB_H;
+    c.dataset.frame = String(frameIdx);
+    const cc = c.getContext("2d");
+    const f = state.frames[frameIdx];
+    const fw = f.width || f.naturalWidth, fh = f.height || f.naturalHeight;
+    const s = Math.min(THUMB_W / fw, THUMB_H / fh);
+    const dw = fw * s, dh = fh * s;
+    cc.drawImage(f, (THUMB_W - dw) / 2, (THUMB_H - dh) / 2, dw, dh);
+    strip.appendChild(c);
+  }
+  updateActiveThumb();
+}
+
+// Pick the sampled thumb closest to state.currentFrame and highlight it.
+function updateActiveThumb() {
+  const strip = $("#conv-thumb-strip");
+  const prev = strip.querySelector("canvas.active");
+  if (prev) prev.classList.remove("active");
+  const thumbs = strip.querySelectorAll("canvas");
+  if (thumbs.length === 0) return;
+  let best = thumbs[0], bestDist = Infinity;
+  for (const t of thumbs) {
+    const d = Math.abs(parseInt(t.dataset.frame) - state.currentFrame);
+    if (d < bestDist) { bestDist = d; best = t; }
+  }
+  best.classList.add("active");
 }
 
 // ── Frame navigation ────────────────────────────────────────────────────────
@@ -461,7 +595,7 @@ function onFramesLoaded() {
 function seekFrame(idx) {
   if (state.frames.length === 0) return;
   state.currentFrame = Math.max(0, Math.min(idx, state.frames.length - 1));
-  $("#conv-frame-slider").value = state.currentFrame;
+  updateActiveThumb();
   updatePreview();
 }
 
@@ -888,6 +1022,7 @@ function applyMosaicToFrames(allFrames) {
   }
 
   Promise.all(pending).then(() => {
+    renderThumbStrip();
     updatePreview();
     setStatus(allFrames ? `已对所有 ${endIdx} 帧应用马赛克` : `已对第 ${state.currentFrame + 1} 帧应用马赛克`);
   });
@@ -923,6 +1058,7 @@ function applyCameraToFrames(allFrames) {
   }
 
   Promise.all(pending).then(() => {
+    renderThumbStrip();
     updatePreview();
     setStatus(allFrames ? `已对所有 ${endIdx} 帧应用相机效果` : `已对第 ${state.currentFrame + 1} 帧应用相机效果`);
   });

@@ -478,8 +478,7 @@ body {
   font-size: 12px;
   color: #a6adc8;
   white-space: nowrap;
-  min-width: 100px;
-  text-align: right;
+  margin-left: auto;
 }
 
 .conv-controls-panel {
@@ -908,9 +907,37 @@ body {
 }
 
 /* All top-toolbar buttons are present in both tabs so users find them
-   in the same place regardless of mode. (In the conversion tab, Redo
-   is a no-op for now since the conv-tab history stack only supports
-   undo, and the selection-mode toggle only affects image-tools mouse
-   handling — toggling it in conv mode is harmless.) */
+   in the same place regardless of mode. The selection-mode toggle
+   only affects image-tools mouse handling, so toggling it in conv
+   mode is a harmless no-op. */
+
+/* Thumbnail timeline strip below the conversion-tab frame controls.
+   Horizontally scrollable row of mini-canvases drawn from state.frames. */
+.conv-thumb-strip {
+  display: flex;
+  gap: 2px;
+  overflow: hidden;
+  padding: 4px 8px;
+  background: #181825;
+  border-top: 1px solid #313244;
+  min-height: 56px;
+  flex-shrink: 0;
+}
+
+.conv-thumb-strip canvas {
+  display: block;
+  width: 64px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 2px;
+  cursor: pointer;
+  background: #11111b;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  transition: outline-color 0.08s;
+}
+
+.conv-thumb-strip canvas:hover { outline-color: #45475a; }
+.conv-thumb-strip canvas.active { outline-color: #89b4fa; }
 
 

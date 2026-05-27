@@ -102,21 +102,7 @@ describe("image-tools tool pills", () => {
 // ── Tab switching (mirrors test_tab_switching) ──────────────────────────────
 // main.js isn't loaded in jsdom, so we wire up the tab logic manually.
 
-function initTabs(doc, barSelector, contentPrefix) {
-  const bar = doc.querySelector(barSelector);
-  if (!bar) return;
-  bar.addEventListener("click", (e) => {
-    const btn = e.target.closest(".tab-btn, .pill-btn");
-    if (!btn) return;
-    bar.querySelectorAll(".tab-btn, .pill-btn").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    const key = btn.dataset.tab || btn.dataset.tool;
-    const parent = bar.parentElement;
-    parent.querySelectorAll(`:scope > [id^="${contentPrefix}"]`).forEach((el) => {
-      el.classList.toggle("active", el.id === `${contentPrefix}${key}`);
-    });
-  });
-}
+import { initTabs } from "../src/tab-init.js";
 
 describe("tab switching", () => {
   beforeEach(() => {

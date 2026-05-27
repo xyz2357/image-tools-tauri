@@ -187,8 +187,8 @@ describe("conversion tab structure", () => {
     expect(btn.disabled).toBe(true);
   });
 
-  it("frame slider exists", () => {
-    expect(document.getElementById("conv-frame-slider")).not.toBeNull();
+  it("thumbnail timeline strip exists (replacing the old frame slider)", () => {
+    expect(document.getElementById("conv-thumb-strip")).not.toBeNull();
   });
 
   it("prev/next buttons exist", () => {

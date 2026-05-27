@@ -2,6 +2,24 @@
 
 Loose backlog. Not exhaustive, not prioritized.
 
+## Pre-release smoke checklist
+
+Things automated tests can't see — run through these in 5 min before
+tagging a new version:
+
+- [ ] Open a video — no `cmd.exe` window flashes
+- [ ] Loading bar appears immediately on file open (not only at decode end)
+- [ ] Tall portrait video (1080×1920) — top half visible by scrolling up
+- [ ] Wide landscape video (1920×1080) — full frame visible by scrolling
+- [ ] Camera overlay: REC indicator horizontally centered along the top
+- [ ] Camera timer: scrub through frames at 15fps, no "66666667" artifacts
+- [ ] Switch between image / video tabs — toolbar buttons stay in same slots
+- [ ] Click empty image-tools canvas → file picker opens
+- [ ] Drag a file onto either tab → loads
+- [ ] Ugoira export with 600 frames triggers the 500-frame confirm dialog
+- [ ] Open from picker → backend ffmpeg starts without terminal window
+
+
 ## E2E test coverage to expand
 
 Current coverage (`e2e/specs/app.e2e.js`): default tab is active + ugoira appears in format dropdown. That's it. Things worth adding, roughly in order of "catches real regressions":
