@@ -93,10 +93,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
 
 .canvas-scroll.empty::after {
-  content: "打开图片或拖放到此处";
+  content: "点击或拖入图片";
   color: #585b70;
   font-size: 16px;
 }

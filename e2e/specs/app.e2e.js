@@ -104,6 +104,29 @@ test("conversion tab shows empty hint when no file is loaded", async ({ appPage:
   await expect(page.locator("#conv-btn-estimate")).toBeDisabled();
 });
 
+// ── Image-tools: empty-state click to open ─────────────────────────────────
+
+test("image-tools empty canvas shows the click/drop hint and has pointer cursor", async ({ appPage: page }) => {
+  await gotoImageTools(page);
+  await expect(page.locator("#canvas-scroll")).toHaveClass(/empty/);
+  const cursor = await page.locator("#canvas-scroll").evaluate((el) => getComputedStyle(el).cursor);
+  expect(cursor).toBe("pointer");
+});
+
+test("clicking the empty image-tools canvas triggers the file picker", async ({ appPage: page }) => {
+  await gotoImageTools(page);
+  // The handler calls fileInput.click() — intercept that to verify
+  // without actually opening a native OS dialog (which would hang CI).
+  await page.evaluate(() => {
+    window.__fileInputClicks = 0;
+    const fi = document.getElementById("file-input");
+    fi.click = () => { window.__fileInputClicks++; };
+  });
+  await page.locator("#canvas-scroll").click({ position: { x: 100, y: 100 } });
+  const clicks = await page.evaluate(() => window.__fileInputClicks);
+  expect(clicks).toBe(1);
+});
+
 // ── Window title ────────────────────────────────────────────────────────────
 
 test("window title is 图片工具", async ({ appPage: page }) => {

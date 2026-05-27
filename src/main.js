@@ -166,6 +166,13 @@ async function saveImage() {
 
 // ── Drag & drop ─────────────────────────────────────────────────────────────
 
+canvasScroll.addEventListener("click", (e) => {
+  // Empty preview area is clickable to open a file (same UX as the
+  // conversion tab). Only triggers when nothing is loaded and the click
+  // is on the scroll area itself (not on a child canvas).
+  if (!state.image && e.target === canvasScroll) openImage();
+});
+
 canvasScroll.addEventListener("dragover", (e) => { e.preventDefault(); });
 canvasScroll.addEventListener("drop", (e) => {
   e.preventDefault();
