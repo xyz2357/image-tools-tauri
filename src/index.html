@@ -44,10 +44,10 @@
         <div class="tools-panel">
           <div class="pill-bar" id="img-pill-bar">
             <button class="pill-btn active" data-tool="mosaic"><span class="icon">▦</span>马赛克</button>
+            <button class="pill-btn" data-tool="camera"><span class="icon">📷</span>相机</button>
+            <button class="pill-btn" data-tool="save"><span class="icon">📁</span>保存到</button>
             <button class="pill-btn" data-tool="text"><span class="icon">T</span>文字</button>
             <button class="pill-btn" data-tool="blur"><span class="icon">∼</span>模糊</button>
-            <button class="pill-btn" data-tool="camera"><span class="icon">📷</span>相机</button>
-            <button class="pill-btn pill-output" data-tool="save"><span class="icon">📁</span>保存到</button>
           </div>
 
           <div class="tool-content active" id="tool-mosaic">
@@ -183,37 +183,22 @@
         <div class="conv-controls-panel">
           <div class="pill-bar" id="conv-pill-bar">
             <button class="pill-btn active" data-conv-tool="mosaic"><span class="icon">▦</span>马赛克</button>
-            <button class="pill-btn" data-conv-tool="text" disabled title="视频模式即将支持"><span class="icon">T</span>文字</button>
-            <button class="pill-btn" data-conv-tool="blur" disabled title="视频模式即将支持"><span class="icon">∼</span>模糊</button>
             <button class="pill-btn" data-conv-tool="camera"><span class="icon">📷</span>相机</button>
-            <button class="pill-btn pill-output" data-conv-tool="output"><span class="icon">📦</span>输出</button>
+            <button class="pill-btn" data-conv-tool="output"><span class="icon">📦</span>输出</button>
           </div>
 
           <div class="conv-tool-content active" id="conv-tool-mosaic">
             <div class="field"><label>方块大小: <span id="conv-mosaic-size-val">20</span></label>
               <input type="range" id="conv-mosaic-size" min="5" max="50" value="20" step="1" />
             </div>
-            <div class="field">
-              <label><input type="checkbox" id="conv-mosaic-enable" /> 启用 / 在预览上框选区域</label>
-            </div>
+            <p style="color: #a6adc8; font-size: 12px; margin: 0;">在预览图上拖动鼠标框选区域，然后点应用。</p>
             <div class="apply-row">
               <button id="conv-btn-mosaic-frame" class="btn-apply" disabled>应用本帧</button>
               <button id="conv-btn-mosaic-all" class="btn-apply secondary" disabled>应用全部</button>
             </div>
           </div>
 
-          <div class="conv-tool-content" id="conv-tool-text">
-            <p style="color: var(--text-dim); padding: 8px 0;">视频模式的文字叠加即将支持。当前只能在图片工具 tab 单图编辑。</p>
-          </div>
-
-          <div class="conv-tool-content" id="conv-tool-blur">
-            <p style="color: var(--text-dim); padding: 8px 0;">视频模式的模糊即将支持。当前只能在图片工具 tab 单图编辑。</p>
-          </div>
-
           <div class="conv-tool-content" id="conv-tool-camera">
-            <div class="field">
-              <label><input type="checkbox" id="conv-camera-enable" /> 启用相机效果叠加</label>
-            </div>
             <div class="field">
               <label>电量: <span id="conv-camera-battery-val">100</span>%</label>
               <input type="range" id="conv-camera-battery" min="0" max="100" value="100" step="1" />

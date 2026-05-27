@@ -52,10 +52,19 @@ body {
   display: none;
   flex: 1;
   overflow: hidden;
+  min-height: 0;
 }
 
 .tab-content.active {
   display: flex;
+}
+
+.conversion-layout, .image-tools-layout {
+  min-height: 0;
+}
+
+.conv-preview-area, .image-area {
+  min-height: 0;
 }
 
 /* ── Image Tools layout ──────────────────────────────── */
@@ -338,8 +347,12 @@ body {
   overflow: auto;
   background: #11111b;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  /* `safe center` falls back to start-alignment when content overflows the
+     scroll viewport — otherwise the centered child gets pushed into
+     un-scrollable negative margin (top half of tall videos disappears). */
+  align-items: safe center;
+  justify-content: safe center;
+  min-height: 0;
 }
 
 .conv-preview-scroll.empty {
@@ -412,6 +425,9 @@ body {
   display: none;
 }
 
+/* Canvas wrapper sizes to the canvas's native pixel resolution; when
+   the video is larger than the preview area, the .conv-preview-scroll
+   parent scrolls (overflow: auto). */
 .conv-canvas-wrapper {
   position: relative;
   display: inline-block;
@@ -419,9 +435,6 @@ body {
 
 .conv-canvas-wrapper canvas {
   display: block;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
 }
 
 #conv-overlay-canvas {
@@ -469,15 +482,13 @@ body {
 }
 
 .conv-controls-panel {
-  width: 340px;
+  width: 380px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
   border-left: 1px solid #313244;
   background: #1e1e2e;
-  overflow-y: auto;
-  padding: 10px 14px;
+  overflow: hidden;
 }
 
 .conv-toolbar {
@@ -821,10 +832,9 @@ body {
   line-height: 1;
 }
 
-.pill-btn.pill-output {
-  grid-column: span 2;
-  border-style: dashed;
-}
+/* `pill-output` class kept for future use but no longer spans 2 columns;
+   it now sits in row 1 alongside other shared pills. */
+.pill-btn.pill-output { border-style: dashed; }
 
 /* Apply row at bottom of each tool pane */
 .apply-row {
@@ -896,10 +906,10 @@ body {
   gap: 5px;
 }
 
-/* Toolbar button visibility by active tab.
-   - Selection-mode toggle and Redo: image only
-   - Everything else (Open, Undo, Reset, filename): both */
-body.tab-video #sel-mode-group { display: none; }
-body.tab-video #btn-redo { display: none; }
+/* All top-toolbar buttons are present in both tabs so users find them
+   in the same place regardless of mode. (In the conversion tab, Redo
+   is a no-op for now since the conv-tab history stack only supports
+   undo, and the selection-mode toggle only affects image-tools mouse
+   handling — toggling it in conv mode is harmless.) */
 
 

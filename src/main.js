@@ -37,9 +37,9 @@ function initTabs(barSelector, contentPrefix) {
   const bar = $(barSelector);
   if (!bar) return;
   bar.addEventListener("click", (e) => {
-    const btn = e.target.closest(".tab-btn");
-    if (!btn) return;
-    bar.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+    const btn = e.target.closest(".tab-btn, .pill-btn");
+    if (!btn || btn.disabled) return;
+    bar.querySelectorAll(".tab-btn, .pill-btn").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
     const key = btn.dataset.tab || btn.dataset.tool;
     const parent = bar.parentElement;

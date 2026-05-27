@@ -58,7 +58,8 @@ function refreshUndoButton() {
 }
 
 function refreshMosaicButtons() {
-  const enabled = $("#conv-mosaic-enable")?.checked && state.mosaicSelection != null;
+  // Enabled when the user has actually drawn a selection on the preview.
+  const enabled = state.mosaicSelection != null;
   const f = $("#conv-btn-mosaic-frame");
   const a = $("#conv-btn-mosaic-all");
   if (f) f.disabled = !enabled;
@@ -89,7 +90,6 @@ export function initConversion() {
 
   $("#conv-format").addEventListener("change", onFormatChange);
   $("#conv-preset").addEventListener("change", onPresetChange);
-  $("#conv-camera-enable").addEventListener("change", () => updatePreview());
   $("#conv-camera-battery").addEventListener("input", (e) => {
     $("#conv-camera-battery-val").textContent = e.target.value;
     updatePreview();
@@ -114,15 +114,7 @@ export function initConversion() {
   $("#conv-ugoira-delay").addEventListener("change", onUgoiraDelayChange);
   $("#conv-ugoira-scale").addEventListener("change", onUgoiraScaleChange);
 
-  // Mosaic controls
-  $("#conv-mosaic-enable").addEventListener("change", (e) => {
-    if (!e.target.checked) {
-      state.mosaicSelection = null;
-      clearConvOverlay();
-    }
-    // Update apply-button enabled state based on selection
-    refreshMosaicButtons();
-  });
+  // Mosaic controls (selection always active when on the mosaic pane)
   $("#conv-mosaic-size").addEventListener("input", (e) => {
     $("#conv-mosaic-size-val").textContent = e.target.value;
   });
@@ -144,6 +136,10 @@ export function initConversion() {
     document.querySelectorAll(".conv-tool-content").forEach((el) => {
       el.classList.toggle("active", el.id === `conv-tool-${tool}`);
     });
+    // Re-render so camera live-preview appears/disappears when the
+    // camera pane is opened/closed, and the mosaic selection clears.
+    if (tool !== "mosaic") clearConvOverlay();
+    updatePreview();
   });
 
   // Overlay canvas mouse events for mosaic selection
@@ -254,6 +250,12 @@ async function openFile() {
 async function loadFromPath(path) {
   stopPlay();
   clearHistory();
+  // Show loading overlay immediately so the user sees something even
+  // during the (often slow) ffprobe + ffmpeg phase. Progress sits at
+  // 5% during metadata probe, 20% while ffmpeg extracts frames, then
+  // ramps 20→100% as PNGs are loaded into Image elements.
+  showLoading(true);
+  setLoadingProgress(5);
   try {
     const info = await invoke("get_video_info", { path });
     state.sourceInfo = info;
@@ -263,15 +265,15 @@ async function loadFromPath(path) {
     const tempDir = await invoke("create_temp_dir");
     state.tempDir = tempDir;
 
+    setLoadingProgress(20);
     const fps = Math.min(info.fps, 30);
     const framePaths = await invoke("extract_frames", { path, fps, tempDir });
 
     state.frames = [];
-    showLoading(true);
     for (let i = 0; i < framePaths.length; i++) {
       const img = await loadImageFromPath(framePaths[i]);
       state.frames.push(img);
-      setLoadingProgress(Math.round(((i + 1) / framePaths.length) * 100));
+      setLoadingProgress(20 + Math.round(((i + 1) / framePaths.length) * 80));
     }
     showLoading(false);
 
@@ -480,7 +482,9 @@ function updatePreview() {
     drawMosaicSelection(state.mosaicSelection);
   }
 
-  if ($("#conv-camera-enable").checked) {
+  // Live-preview the camera overlay whenever the camera pane is open
+  // so the user can see what they're configuring before clicking apply.
+  if (document.getElementById("conv-tool-camera")?.classList.contains("active")) {
     const battery = parseInt($("#conv-camera-battery").value) / 100;
     const fps = parseInt($("#conv-fps").value);
     const msPerFrame = fps > 0 ? 1000 / fps : 33;
@@ -665,7 +669,11 @@ async function exportAnimation() {
 
     const fps = parseInt($("#conv-fps").value);
     const msPerFrame = fps > 0 ? 1000 / fps : 33;
-    const applyCamera = $("#conv-camera-enable").checked;
+    // The live-preview camera overlay is no longer auto-baked into the
+    // export — users now bake it explicitly via the "应用本帧 / 应用全部"
+    // buttons on the camera pane. This avoids double-rendering for frames
+    // that were already baked.
+    const applyCamera = false;
     const battery = parseInt($("#conv-camera-battery").value) / 100;
     const timerStart = $("#conv-camera-timer").value || "00:00:00.000";
     const autoInc = $("#conv-camera-auto-inc").checked;
@@ -805,7 +813,9 @@ function convCanvasCoords(e) {
 }
 
 function onOverlayMouseDown(e) {
-  if (!$("#conv-mosaic-enable").checked || state.frames.length === 0) return;
+  // Only react to drag-to-select when the mosaic pane is the active tool.
+  const onMosaicPane = document.getElementById("conv-tool-mosaic")?.classList.contains("active");
+  if (!onMosaicPane || state.frames.length === 0) return;
   state.isSelectingMosaic = true;
   state.mosaicStart = convCanvasCoords(e);
 }

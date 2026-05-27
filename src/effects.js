@@ -124,7 +124,9 @@ export function formatTime(h, m, s, ms) {
  */
 export function addMsToTime(timeStr, msToAdd) {
   const { h, m, s, ms } = parseTimeString(timeStr);
-  let total = h * 3600000 + m * 60000 + s * 1000 + ms + msToAdd;
+  // Round to whole ms so a fractional msToAdd (e.g. 1000/15 = 66.666…)
+  // doesn't surface as "66.666666666666667" in the formatted output.
+  let total = Math.round(h * 3600000 + m * 60000 + s * 1000 + ms + msToAdd);
   const nh = Math.floor(total / 3600000); total %= 3600000;
   const nm = Math.floor(total / 60000); total %= 60000;
   const ns = Math.floor(total / 1000);
@@ -197,16 +199,18 @@ export function drawCameraOverlay(ctx, w, h, batteryLevel, timerText) {
 
   const recSize = Math.floor(0.04 * minDim);
   const circR = Math.floor(0.01 * minDim);
-  const recX = w - margin - cornerLen + iconOff;
+  ctx.font = `${recSize}px Arial`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  // Horizontally center the [● REC] composite along the top.
+  const recTextW = ctx.measureText("REC").width;
+  const recTotalW = 2 * circR + iconOff + recTextW;
+  const recX = (w - recTotalW) / 2 + circR;
   const recY = margin + iconOff + circR + 2;
   ctx.fillStyle = "rgb(255,0,0)";
   ctx.beginPath();
   ctx.arc(recX, recY, circR, 0, 2 * Math.PI);
   ctx.fill();
-  ctx.font = `${recSize}px Arial`;
-  ctx.fillStyle = "rgb(255,0,0)";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
   ctx.fillText("REC", recX + circR + iconOff, recY);
 
   if (timerText) {

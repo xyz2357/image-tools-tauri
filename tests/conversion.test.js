@@ -201,6 +201,13 @@ describe("conversion format selector", () => {
   beforeEach(setup);
   afterEach(teardown);
 
+  it("conversion pill bar has 3 pills (mosaic / camera / output) sharing positions with image-tools", () => {
+    const pills = document.querySelectorAll("#conv-pill-bar .pill-btn");
+    expect(pills.length).toBe(3);
+    const tools = Array.from(pills).map((p) => p.dataset.convTool);
+    expect(tools).toEqual(["mosaic", "camera", "output"]);
+  });
+
   it("format selector has 5 options", () => {
     const sel = document.getElementById("conv-format");
     expect(sel.options.length).toBe(5);
@@ -326,14 +333,6 @@ describe("conversion camera effect controls", () => {
   beforeEach(setup);
   afterEach(teardown);
 
-  it("camera enable checkbox exists", () => {
-    expect(document.getElementById("conv-camera-enable")).not.toBeNull();
-  });
-
-  it("camera enable is unchecked by default", () => {
-    expect(document.getElementById("conv-camera-enable").checked).toBe(false);
-  });
-
   it("camera battery slider exists", () => {
     const el = document.getElementById("conv-camera-battery");
     expect(el).not.toBeNull();
@@ -346,12 +345,11 @@ describe("conversion camera effect controls", () => {
     expect(el.value).toBe("00:00:00.000");
   });
 
-  it("camera-enable checkbox exists and is unchecked by default", () => {
-    // Each effect is now its own pill pane; the old #conv-camera-options
-    // sub-section was folded into #conv-tool-camera.
-    const el = document.getElementById("conv-camera-enable");
-    expect(el).not.toBeNull();
-    expect(el.checked).toBe(false);
+  it("camera pane is its own pill tool (no enable checkbox needed)", () => {
+    // The old #conv-camera-enable checkbox was removed — being on the
+    // camera pane is the enable signal. Verify the pane exists.
+    expect(document.getElementById("conv-tool-camera")).not.toBeNull();
+    expect(document.getElementById("conv-camera-enable")).toBeNull();
   });
 });
 
@@ -423,12 +421,6 @@ describe("conversion mosaic controls", () => {
   beforeEach(setup);
   afterEach(teardown);
 
-  it("mosaic enable checkbox exists and is unchecked by default", () => {
-    const el = document.getElementById("conv-mosaic-enable");
-    expect(el).not.toBeNull();
-    expect(el.checked).toBe(false);
-  });
-
   it("mosaic size slider exists with correct range", () => {
     const el = document.getElementById("conv-mosaic-size");
     expect(el).not.toBeNull();
@@ -437,11 +429,11 @@ describe("conversion mosaic controls", () => {
     expect(parseInt(el.value)).toBe(20);
   });
 
-  it("mosaic-enable checkbox exists and is unchecked by default", () => {
-    // #conv-mosaic-options sub-section was folded into #conv-tool-mosaic.
-    const el = document.getElementById("conv-mosaic-enable");
-    expect(el).not.toBeNull();
-    expect(el.checked).toBe(false);
+  it("mosaic pane is its own pill tool (no enable checkbox needed)", () => {
+    // The old #conv-mosaic-enable checkbox was removed — drag-to-select
+    // is always active while the mosaic pane is open.
+    expect(document.getElementById("conv-tool-mosaic")).not.toBeNull();
+    expect(document.getElementById("conv-mosaic-enable")).toBeNull();
   });
 
   it("mosaic apply-to-frame button exists and starts disabled", () => {

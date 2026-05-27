@@ -4,6 +4,17 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+// Apply CREATE_NO_WINDOW so spawning ffmpeg / ffprobe / where doesn't
+// flash a black console window — otherwise every time the user opens a
+// video or exports, a cmd window pops up briefly behind the app.
+#[cfg(windows)]
+fn no_window(cmd: &mut Command) {
+    use std::os::windows::process::CommandExt;
+    cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+}
+#[cfg(not(windows))]
+fn no_window(_cmd: &mut Command) {}
+
 // ── Data types ──────────────────────────────────────────────────────────────
 
 #[derive(Serialize)]
@@ -54,11 +65,17 @@ fn find_ffprobe() -> Result<PathBuf, String> {
 }
 
 fn which_executable(name: &str) -> Result<PathBuf, String> {
-    let output = if cfg!(target_os = "windows") {
-        Command::new("where").arg(name).output()
+    let mut cmd = if cfg!(target_os = "windows") {
+        let mut c = Command::new("where");
+        c.arg(name);
+        c
     } else {
-        Command::new("which").arg(name).output()
+        let mut c = Command::new("which");
+        c.arg(name);
+        c
     };
+    no_window(&mut cmd);
+    let output = cmd.output();
     match output {
         Ok(o) if o.status.success() => {
             let s = String::from_utf8_lossy(&o.stdout);
@@ -78,8 +95,10 @@ fn which_executable(name: &str) -> Result<PathBuf, String> {
 #[tauri::command]
 pub fn check_ffmpeg() -> Result<String, String> {
     let ffmpeg = find_ffmpeg()?;
-    let output = Command::new(&ffmpeg)
-        .arg("-version")
+    let mut cmd = Command::new(&ffmpeg);
+    cmd.arg("-version");
+    no_window(&mut cmd);
+    let output = cmd
         .output()
         .map_err(|e| format!("Failed to run ffmpeg: {}", e))?;
     let version = String::from_utf8_lossy(&output.stdout);
@@ -90,14 +109,16 @@ pub fn check_ffmpeg() -> Result<String, String> {
 #[tauri::command]
 pub fn get_video_info(path: String) -> Result<VideoInfo, String> {
     let ffprobe = find_ffprobe()?;
-    let output = Command::new(&ffprobe)
-        .args([
-            "-v", "quiet",
-            "-print_format", "json",
-            "-show_format",
-            "-show_streams",
-            &path,
-        ])
+    let mut cmd = Command::new(&ffprobe);
+    cmd.args([
+        "-v", "quiet",
+        "-print_format", "json",
+        "-show_format",
+        "-show_streams",
+        &path,
+    ]);
+    no_window(&mut cmd);
+    let output = cmd
         .output()
         .map_err(|e| format!("ffprobe failed: {}", e))?;
 
@@ -235,6 +256,7 @@ pub fn export_animation(
     }
 
     cmd.arg(&output_path);
+    no_window(&mut cmd);
 
     let output = cmd.output().map_err(|e| format!("ffmpeg failed: {}", e))?;
     if !output.status.success() {
@@ -423,6 +445,7 @@ pub fn extract_frames(path: String, fps: f64, temp_dir: String) -> Result<Vec<St
     }
 
     cmd.arg(output_pattern.to_string_lossy().as_ref());
+    no_window(&mut cmd);
 
     let output = cmd.output().map_err(|e| format!("ffmpeg frame extraction failed: {}", e))?;
     if !output.status.success() {

@@ -76,11 +76,13 @@ describe("image-tools tool pills", () => {
   beforeEach(setup);
   afterEach(teardown);
 
-  it("has 5 tool pills (4 effects + save)", () => {
+  it("has 5 tool pills with shared-first ordering", () => {
+    // Order: shared positions (1-3) match the conversion tab's pills;
+    // the image-only effects (text, blur) trail in positions 4-5.
     const pills = document.querySelectorAll("#img-pill-bar .pill-btn");
     expect(pills.length).toBe(5);
     const tools = Array.from(pills).map((p) => p.dataset.tool);
-    expect(tools).toEqual(["mosaic", "text", "blur", "camera", "save"]);
+    expect(tools).toEqual(["mosaic", "camera", "save", "text", "blur"]);
   });
 
   it("mosaic pill is active by default", () => {
