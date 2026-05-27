@@ -18,15 +18,13 @@
 
 ### 视频（单帧截图）
 
-| 原视频帧 | 马赛克 | 文字图层 |
+格式转换 tab 目前支持的两个效果（马赛克 / 相机叠加）。
+
+| 原视频帧 | 马赛克 | 相机叠加 |
 |---|---|---|
-| <img src="docs/samples/vid-original.jpg" width="220" /> | <img src="docs/samples/vid-mosaic.jpg" width="220" /> | <img src="docs/samples/vid-text.jpg" width="220" /> |
+| <img src="docs/samples/vid-original.jpg" width="220" /> | <img src="docs/samples/vid-mosaic.jpg" width="220" /> | <img src="docs/samples/vid-camera.jpg" width="220" /> |
 
-| 方向性模糊 | 相机叠加 |
-|---|---|
-| <img src="docs/samples/vid-blur.jpg" width="220" /> | <img src="docs/samples/vid-camera.jpg" width="220" /> |
-
-视频示例是 sample.mp4 第 2 秒处单帧通过同一套 app 代码处理的结果（不是 ffmpeg 近似）。在实际应用里可对子帧范围 + 选定区域应用同样的效果。
+视频示例是 sample.mp4 第 2 秒处单帧的处理结果。在实际应用里可对子帧范围 + 选定区域应用同样的效果。
 
 ## 功能
 

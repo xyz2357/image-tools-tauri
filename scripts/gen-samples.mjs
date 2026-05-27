@@ -136,8 +136,9 @@ async function generate() {
       await genSample(page, sampleImg, "img", name, fn);
     }
     console.log("video-frame samples");
-    for (const [name, fn] of Object.entries(EFFECTS)) {
-      await genSample(page, vidFrame, "vid", name, fn);
+    // Conv tab only supports mosaic + camera, so we only show those.
+    for (const name of ["original", "mosaic", "camera"]) {
+      await genSample(page, vidFrame, "vid", name, EFFECTS[name]);
     }
   });
 
