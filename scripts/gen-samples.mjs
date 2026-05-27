@@ -72,82 +72,76 @@ function compressPng(srcPath, dstPath, longSide = 800) {
   if (r.status !== 0) throw new Error(`ffmpeg failed for ${srcPath}`);
 }
 
-async function genImage(page, name, setupFn) {
-  console.log("  -> " + name);
-  const sampleB64 = fs.readFileSync(sampleImg).toString("base64");
-  await page.evaluate((b64) => window.__mainTest.loadImage(b64), sampleB64);
+async function genSample(page, srcPath, outPrefix, name, setupFn) {
+  console.log(`  -> ${outPrefix}-${name}`);
+  const srcB64 = fs.readFileSync(srcPath).toString("base64");
+  await page.evaluate((b64) => window.__mainTest.loadImage(b64), srcB64);
   await page.evaluate(() => window.__mainTest.setSelectionFull());
   await setupFn(page);
   await sleep(300);
   const dataUrl = await page.evaluate(() => window.__mainTest.getCompositeDataURL());
-  const tmpPath = path.join(os.tmpdir(), `gen-${name}.png`);
+  const tmpPath = path.join(os.tmpdir(), `gen-${outPrefix}-${name}.png`);
   await saveDataUrlPng(dataUrl, tmpPath);
-  const finalPath = path.join(outDir, `img-${name}.jpg`);
+  const finalPath = path.join(outDir, `${outPrefix}-${name}.jpg`);
   compressPng(tmpPath, finalPath);
   fs.unlinkSync(tmpPath);
 }
 
+const EFFECTS = {
+  original: async () => {},
+  mosaic: async (p) => {
+    await p.locator("#img-pill-bar .pill-btn[data-tool='mosaic']").click();
+    await p.locator("#mosaic-size").evaluate((el) => { el.value = "40"; el.dispatchEvent(new Event("input")); });
+    await p.locator("#btn-apply-mosaic").click();
+  },
+  text: async (p) => {
+    await p.locator("#img-pill-bar .pill-btn[data-tool='text']").click();
+    await p.locator("#text-input").fill("Image Tools");
+    await p.locator("#text-color").evaluate((el) => { el.value = "#ff4444"; el.dispatchEvent(new Event("input")); });
+    await p.locator("#text-size").evaluate((el) => { el.value = "200"; el.dispatchEvent(new Event("input")); });
+    await p.locator("#text-auto-fit").evaluate((el) => { if (!el.checked) el.click(); });
+    await p.locator("#btn-apply-text").click();
+  },
+  blur: async (p) => {
+    await p.locator("#img-pill-bar .pill-btn[data-tool='blur']").click();
+    await p.locator("#blur-intensity").evaluate((el) => { el.value = "40"; el.dispatchEvent(new Event("input")); });
+    await p.locator("#btn-apply-blur").click();
+  },
+  camera: async (p) => {
+    await p.locator("#img-pill-bar .pill-btn[data-tool='camera']").click();
+    await p.locator("#camera-battery").evaluate((el) => { el.value = "78"; el.dispatchEvent(new Event("input")); });
+    await p.locator("#camera-timer").fill("00:01:23.456");
+    await p.locator("#btn-apply-camera").click();
+  },
+};
+
 async function generate() {
   buildRelease();
+
+  // Extract a representative single frame from sample.mp4 so we can run
+  // the same app-driven effect pipeline on it (rather than approximating
+  // with ffmpeg filters). This way both `img-*` and `vid-*` samples are
+  // genuine app output.
+  console.log("extracting video frame");
+  const vidFrame = path.join(os.tmpdir(), "gen-video-frame.png");
+  spawnSyncOrThrow("ffmpeg", [
+    "-y", "-ss", "00:00:02", "-i", path.join(root, "sample.mp4"),
+    "-frames:v", "1", vidFrame,
+  ]);
+
   await withApp(async (page) => {
-    // Ensure we're on image-tools tab.
     await page.locator("button[data-tab='image-tools']").click();
-
-    // 1) Original (reference) — load + dump without any effect.
-    await genImage(page, "original", async () => {});
-
-    // 2) Mosaic — pick mosaic pill, set largish block size, apply.
-    await genImage(page, "mosaic", async (p) => {
-      await p.locator("#img-pill-bar .pill-btn[data-tool='mosaic']").click();
-      await p.locator("#mosaic-size").evaluate((el) => { el.value = "40"; el.dispatchEvent(new Event("input")); });
-      await p.locator("#btn-apply-mosaic").click();
-    });
-
-    // 3) Text — pick text pill, type some text, apply.
-    await genImage(page, "text", async (p) => {
-      await p.locator("#img-pill-bar .pill-btn[data-tool='text']").click();
-      await p.locator("#text-input").fill("Image Tools");
-      await p.locator("#text-color").evaluate((el) => { el.value = "#ff4444"; el.dispatchEvent(new Event("input")); });
-      await p.locator("#text-size").evaluate((el) => { el.value = "200"; el.dispatchEvent(new Event("input")); });
-      await p.locator("#text-auto-fit").evaluate((el) => { if (!el.checked) el.click(); });
-      await p.locator("#btn-apply-text").click();
-    });
-
-    // 4) Blur — pick blur pill, big intensity, apply.
-    await genImage(page, "blur", async (p) => {
-      await p.locator("#img-pill-bar .pill-btn[data-tool='blur']").click();
-      await p.locator("#blur-intensity").evaluate((el) => { el.value = "40"; el.dispatchEvent(new Event("input")); });
-      await p.locator("#btn-apply-blur").click();
-    });
-
-    // 5) Camera — pick camera pill, set battery, click apply.
-    await genImage(page, "camera", async (p) => {
-      await p.locator("#img-pill-bar .pill-btn[data-tool='camera']").click();
-      await p.locator("#camera-battery").evaluate((el) => { el.value = "78"; el.dispatchEvent(new Event("input")); });
-      await p.locator("#camera-timer").fill("00:01:23.456");
-      await p.locator("#btn-apply-camera").click();
-    });
+    console.log("image samples");
+    for (const [name, fn] of Object.entries(EFFECTS)) {
+      await genSample(page, sampleImg, "img", name, fn);
+    }
+    console.log("video-frame samples");
+    for (const [name, fn] of Object.entries(EFFECTS)) {
+      await genSample(page, vidFrame, "vid", name, fn);
+    }
   });
 
-  // Video samples — extract a single frame at 2s of sample.mp4 with
-  // each effect applied. README links to JPGs (cheaper to render
-  // inline on GitHub than autoplaying MP4s).
-  console.log("video samples (ffmpeg, single frame)");
-  const vidIn = path.join(root, "sample.mp4");
-
-  const vidFilters = {
-    original: "scale=480:-1",
-    mosaic: "scale=iw/14:ih/14,scale=iw*14:ih*14:flags=neighbor,scale=480:-1",
-    blur: "boxblur=12:1,scale=480:-1",
-  };
-  for (const [name, vf] of Object.entries(vidFilters)) {
-    spawnSyncOrThrow("ffmpeg", [
-      "-y", "-ss", "00:00:02", "-i", vidIn, "-frames:v", "1",
-      "-vf", vf, "-q:v", "5",
-      path.join(outDir, `vid-${name}.jpg`),
-    ]);
-  }
-
+  fs.unlinkSync(vidFrame);
   console.log("Wrote " + outDir);
 }
 
