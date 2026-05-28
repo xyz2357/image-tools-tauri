@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<title>Variant A · Photoshop-style</title>
+<style>
+  :root {
+    --crust: #0e0e16; --base: #1a1a26; --mantle: #15151f; --panel: #1f1f2c;
+    --surface0: #2a2a3a; --surface1: #3a3a4e; --line: #262635;
+    --text: #cdd6f4; --subtext: #8b91a8; --dim: #5a5f73;
+    --mauve: #cba6f7; --blue: #89b4fa; --teal: #94e2d5; --peach: #fab387; --green: #a6e3a1; --red: #f38ba8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--crust); color: var(--text);
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif; font-size: 13px; overflow: hidden; }
+  .app { display: grid; grid-template-columns: 56px 1fr 320px; grid-template-rows: 36px 1fr 120px; height: 100vh; }
+
+  /* top menu */
+  .menubar { grid-column: 1 / -1; background: var(--mantle); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; padding: 0 14px; gap: 22px; font-size: 12px; color: var(--subtext); }
+  .menubar .brand { font-family: "JetBrains Mono", monospace; color: var(--text); font-weight: 600; letter-spacing: 0.04em; }
+  .menubar .brand b { color: var(--mauve); }
+  .menubar .item { cursor: default; }
+  .menubar .item:hover { color: var(--text); }
+  .menubar .right { margin-left: auto; display: flex; gap: 16px; align-items: center; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--dim); }
+  .menubar .right .file { color: var(--text); }
+
+  /* left icon rail */
+  .rail { background: var(--mantle); border-right: 1px solid var(--line); display: flex; flex-direction: column;
+    align-items: center; padding: 8px 0; gap: 2px; }
+  .rail .tool { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 6px; color: var(--subtext);
+    cursor: default; position: relative; }
+  .rail .tool:hover { background: var(--surface0); color: var(--text); }
+  .rail .tool.active { background: var(--surface0); color: var(--mauve); }
+  .rail .tool.active::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; background: var(--mauve); border-radius: 0 2px 2px 0; }
+  .rail .tool svg { width: 20px; height: 20px; }
+  .rail .sep { width: 24px; height: 1px; background: var(--line); margin: 6px 0; }
+  .rail .mode { margin-top: auto; padding-bottom: 8px; }
+  .rail .mode .tool { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: 0.05em; }
+
+  /* canvas */
+  .stage { background: var(--base); display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .stage-toolbar { height: 32px; border-bottom: 1px solid var(--line); display: flex; align-items: center;
+    padding: 0 12px; gap: 10px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--dim); background: var(--mantle); }
+  .chip { padding: 3px 8px; border-radius: 3px; background: var(--surface0); color: var(--text); }
+  .chip.dim { background: transparent; color: var(--dim); }
+  .stage-toolbar .grow { flex: 1; }
+  .canvas-wrap { flex: 1; min-height: 0; background:
+    radial-gradient(ellipse at center, #1d1d2a 0%, #0e0e16 100%);
+    display: grid; place-items: center; position: relative; overflow: hidden; padding: 24px; }
+  .canvas { background: #000; box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px var(--surface0); max-width: 100%; max-height: 100%; position: relative; }
+  .canvas img { display: block; max-width: 100%; max-height: calc(100vh - 36px - 32px - 120px - 80px); object-fit: contain; }
+  .canvas .sel { position: absolute; inset: 18% 22% 24% 16%; border: 1px dashed var(--mauve); pointer-events: none;
+    background: rgba(203, 166, 247, 0.04); }
+  .canvas .sel::before, .canvas .sel::after { content: ""; position: absolute; width: 7px; height: 7px; background: var(--mauve); }
+  .canvas .sel::before { left: -3px; top: -3px; }
+  .canvas .sel::after { right: -3px; bottom: -3px; }
+  .canvas .handles span { position: absolute; width: 7px; height: 7px; background: var(--mauve); }
+  .canvas .handles .tr { right: -3px; top: -3px; } .canvas .handles .bl { left: -3px; bottom: -3px; }
+
+  /* right panel */
+  .panel { background: var(--mantle); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .panel-tabs { display: flex; border-bottom: 1px solid var(--line); }
+  .panel-tabs .pt { flex: 1; text-align: center; padding: 10px 0; font-size: 11px; font-family: "JetBrains Mono", monospace;
+    letter-spacing: 0.1em; color: var(--dim); border-bottom: 2px solid transparent; }
+  .panel-tabs .pt.active { color: var(--text); border-bottom-color: var(--mauve); }
+  .panel-body { flex: 1; overflow: auto; padding: 18px 16px; }
+  .group { margin-bottom: 22px; }
+  .group h3 { font-size: 10px; font-family: "JetBrains Mono", monospace; letter-spacing: 0.16em; color: var(--dim);
+    text-transform: uppercase; margin: 0 0 10px; font-weight: 500; }
+  .row { display: grid; grid-template-columns: 90px 1fr 56px; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; }
+  .row label { color: var(--subtext); }
+  .row .val { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--text); text-align: right; }
+  .slider { height: 4px; background: var(--surface0); border-radius: 2px; position: relative; }
+  .slider .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--mauve); border-radius: 2px; }
+  .slider .knob { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px;
+    background: var(--text); border-radius: 50%; box-shadow: 0 0 0 3px var(--mantle); }
+  .input { background: var(--surface0); border: 1px solid var(--line); border-radius: 3px; padding: 6px 8px;
+    color: var(--text); font-size: 12px; font-family: inherit; }
+  .row input.input { width: 100%; grid-column: 2 / 4; }
+  select.input { width: 100%; appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--dim) 50%), linear-gradient(135deg, var(--dim) 50%, transparent 50%);
+    background-position: calc(100% - 14px) center, calc(100% - 10px) center; background-size: 4px 4px; background-repeat: no-repeat; padding-right: 24px; }
+  .btn { background: var(--surface0); color: var(--text); border: 1px solid var(--line); border-radius: 4px;
+    padding: 8px 12px; font-size: 12px; cursor: default; font-family: inherit; }
+  .btn:hover { background: var(--surface1); }
+  .btn.primary { background: var(--mauve); color: var(--crust); border-color: var(--mauve); font-weight: 600; }
+  .btn.primary:hover { background: #d8b9ff; }
+  .btn-row { display: flex; gap: 8px; }
+  .swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+  .swatches span { aspect-ratio: 1; border-radius: 2px; }
+
+  /* bottom strip — frames */
+  .strip { background: var(--mantle); border-top: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .strip-bar { height: 28px; display: flex; align-items: center; padding: 0 12px; gap: 12px; border-bottom: 1px solid var(--line);
+    font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--dim); }
+  .strip-bar .play { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 3px; background: var(--surface0); color: var(--text); }
+  .frames { flex: 1; display: flex; gap: 3px; padding: 10px 12px; overflow: hidden; align-items: stretch; }
+  .frames .f { flex: 1; min-width: 0; background: var(--surface0); border-radius: 2px; position: relative; overflow: hidden; opacity: 0.7; }
+  .frames .f img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .frames .f.cur { box-shadow: inset 0 0 0 2px var(--mauve); opacity: 1; }
+  .frames .f.sel { box-shadow: inset 0 0 0 1px var(--teal); }
+  .frames .f::after { content: attr(data-i); position: absolute; bottom: 2px; right: 3px; font-family: "JetBrains Mono", monospace; font-size: 9px; color: var(--dim); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="menubar">
+    <div class="brand">image<b>·</b>tools</div>
+    <span class="item">File</span><span class="item">Edit</span><span class="item">Selection</span><span class="item">Filter</span><span class="item">View</span><span class="item">Help</span>
+    <div class="right"><span class="file">sample.mp4</span><span>1920×1080</span><span>·</span><span>24 fps</span><span>·</span><span>00:00:02.083</span></div>
+  </div>
+
+  <nav class="rail">
+    <div class="tool" title="Select">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3l8 18 2.5-7L21 11.5z"/></svg>
+    </div>
+    <div class="tool" title="Lasso">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 7c0-2 3-3 7-3s7 1 7 3-3 3-7 3-7-1-7-3zm0 0v5c0 2 2 3 4 3"/></svg>
+    </div>
+    <div class="sep"></div>
+    <div class="tool active" title="Mosaic">
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="5" height="5"/><rect x="10" y="3" width="5" height="5" opacity=".5"/><rect x="17" y="3" width="4" height="5" opacity=".3"/><rect x="3" y="10" width="5" height="5" opacity=".5"/><rect x="10" y="10" width="5" height="5"/><rect x="17" y="10" width="4" height="5" opacity=".5"/><rect x="3" y="17" width="5" height="4" opacity=".3"/><rect x="10" y="17" width="5" height="4" opacity=".5"/><rect x="17" y="17" width="4" height="4"/></svg>
+    </div>
+    <div class="tool" title="Blur">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="5" opacity=".6"/><circle cx="12" cy="12" r="8" opacity=".3"/></svg>
+    </div>
+    <div class="tool" title="Text">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 6h14M12 6v13M9 19h6"/></svg>
+    </div>
+    <div class="tool" title="Camera overlay">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg>
+    </div>
+    <div class="sep"></div>
+    <div class="tool" title="Convert / Export">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h11l-3-3M20 17H9l3 3"/></svg>
+    </div>
+    <div class="mode">
+      <div class="tool" style="font-weight:600">IMG</div>
+      <div class="tool active" style="font-weight:600; color: var(--peach)">VID</div>
+    </div>
+  </nav>
+
+  <main class="stage">
+    <div class="stage-toolbar">
+      <span class="chip">Mosaic</span>
+      <span class="chip dim">block 40px</span>
+      <span class="chip dim">apply to: selection</span>
+      <span class="grow"></span>
+      <span class="chip dim">⌘Z undo · ⌘⇧Z redo</span>
+      <span class="chip dim">zoom 87%</span>
+    </div>
+    <div class="canvas-wrap">
+      <div class="canvas">
+        <img src="../docs/samples/vid-original.jpg" alt="" />
+        <div class="sel"><div class="handles"><span class="tr"></span><span class="bl"></span></div></div>
+      </div>
+    </div>
+  </main>
+
+  <aside class="panel">
+    <div class="panel-tabs">
+      <div class="pt active">PROPERTIES</div>
+      <div class="pt">HISTORY</div>
+      <div class="pt">EXPORT</div>
+    </div>
+    <div class="panel-body">
+      <div class="group">
+        <h3>Mosaic</h3>
+        <div class="row"><label>Block size</label>
+          <div class="slider"><div class="fill" style="width:42%"></div><div class="knob" style="left:42%"></div></div>
+          <span class="val">40 px</span></div>
+        <div class="row"><label>Apply to</label>
+          <select class="input"><option>Current selection</option><option>Whole frame</option></select><span></span></div>
+        <div class="btn-row" style="margin-top:10px">
+          <button class="btn primary" style="flex:1">Apply</button>
+          <button class="btn">Reset</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Selection</h3>
+        <div class="row"><label>Mode</label>
+          <select class="input"><option>Rectangle</option><option>Lasso</option></select><span></span></div>
+        <div class="row"><label>X · Y</label><input class="input" value="412, 218" /><span></span></div>
+        <div class="row"><label>W · H</label><input class="input" value="980 × 540" /><span></span></div>
+      </div>
+
+      <div class="group">
+        <h3>Frame range</h3>
+        <div class="row"><label>From</label><input class="input" value="00:00:01.500" /><span></span></div>
+        <div class="row"><label>To</label><input class="input" value="00:00:03.200" /><span></span></div>
+        <div class="row"><label>Apply to</label>
+          <select class="input"><option>Selected range (41 frames)</option><option>Current frame only</option><option>All frames</option></select><span></span></div>
+      </div>
+
+      <div class="group">
+        <h3>Output</h3>
+        <div class="row"><label>Format</label>
+          <select class="input"><option>MP4 (H.264)</option><option>GIF</option><option>WebP</option><option>APNG</option><option>Ugoira (folder)</option></select><span></span></div>
+        <div class="row"><label>Preset</label>
+          <select class="input"><option>Balanced</option><option>Extreme compression</option><option>High quality</option></select><span></span></div>
+        <div class="row"><label>Scale</label>
+          <div class="slider"><div class="fill" style="width:100%"></div><div class="knob" style="left:100%"></div></div>
+          <span class="val">100%</span></div>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn primary" style="flex:1">Export…</button>
+          <button class="btn">Estimate</button>
+        </div>
+        <div style="margin-top:8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--dim);">est. 4.2 MB · ~6s</div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="strip">
+    <div class="strip-bar">
+      <div class="play">▶</div>
+      <span>00:00:02.083 / 00:00:08.000</span>
+      <span style="flex:1"></span>
+      <span>loop</span><span style="color:var(--teal)">●</span>
+      <span>·</span>
+      <span>192 frames</span>
+      <span>·</span>
+      <span style="color: var(--mauve)">41 selected</span>
+    </div>
+    <div class="frames">
+      <div class="f" data-i="01"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+      <div class="f" data-i="02"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+      <div class="f sel" data-i="03"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+      <div class="f sel" data-i="04"><img src="../docs/samples/vid-mosaic.jpg" alt=""></div>
+      <div class="f sel cur" data-i="05"><img src="../docs/samples/vid-mosaic.jpg" alt=""></div>
+      <div class="f sel" data-i="06"><img src="../docs/samples/vid-mosaic.jpg" alt=""></div>
+      <div class="f sel" data-i="07"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+      <div class="f" data-i="08"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+      <div class="f" data-i="09"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+      <div class="f" data-i="10"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+      <div class="f" data-i="11"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+      <div class="f" data-i="12"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+      <div class="f" data-i="13"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+      <div class="f" data-i="14"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+      <div class="f" data-i="15"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+      <div class="f" data-i="16"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+      <div class="f" data-i="17"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+      <div class="f" data-i="18"><img src="../docs/samples/vid-original.jpg" alt=""></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

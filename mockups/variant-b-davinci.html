@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<title>Variant B · DaVinci-style</title>
+<style>
+  :root {
+    --crust: #0a0a0f; --base: #14141c; --mantle: #101019; --panel: #181824;
+    --surface0: #1f1f2c; --surface1: #2c2c3d; --line: #1c1c28;
+    --text: #e6e8ef; --subtext: #8b91a8; --dim: #565b6e;
+    --accent: #ff8a5b;  /* cinema warm */
+    --teal: #5dd6c4; --blue: #6ba8f5; --mauve: #b89aef;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--crust); color: var(--text);
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif; font-size: 13px; overflow: hidden; }
+  .app { display: grid; grid-template-rows: 48px 1fr 152px; height: 100vh; }
+
+  /* top bar — large action zone */
+  .topbar { background: var(--mantle); border-bottom: 1px solid var(--line); display: flex; align-items: stretch; padding: 0 8px; }
+  .brand { display: flex; align-items: center; padding: 0 18px 0 10px; font-family: "Space Mono", "JetBrains Mono", monospace;
+    font-size: 12px; letter-spacing: 0.12em; color: var(--dim); border-right: 1px solid var(--line); margin-right: 8px; }
+  .brand b { color: var(--accent); font-weight: 700; margin-right: 6px; }
+  .group { display: flex; align-items: center; gap: 2px; padding: 6px 8px; border-right: 1px solid var(--line); }
+  .group:last-of-type { border-right: 0; }
+  .gb { display: flex; flex-direction: column; align-items: center; padding: 4px 10px; gap: 3px; border-radius: 4px; min-width: 56px; color: var(--subtext); }
+  .gb:hover { background: var(--surface0); color: var(--text); }
+  .gb.active { background: var(--surface0); color: var(--accent); }
+  .gb svg { width: 18px; height: 18px; }
+  .gb span { font-size: 10px; letter-spacing: 0.06em; font-family: "JetBrains Mono", monospace; }
+  .mode-switch { margin-left: auto; display: flex; align-items: center; padding: 6px 12px; gap: 4px; }
+  .mode-switch .ms { padding: 7px 14px; font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.14em;
+    color: var(--dim); border-radius: 3px; }
+  .mode-switch .ms.active { background: var(--surface0); color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+
+  /* main: canvas left, panel right */
+  .main { display: grid; grid-template-columns: 1fr 360px; min-height: 0; }
+  .viewer { background:
+    radial-gradient(ellipse at 50% 40%, #1c1c28 0%, #0a0a0f 70%);
+    display: flex; flex-direction: column; min-width: 0; }
+  .viewer-head { height: 32px; display: flex; align-items: center; padding: 0 16px; gap: 16px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--dim); border-bottom: 1px solid var(--line); }
+  .viewer-head .lbl { color: var(--subtext); letter-spacing: 0.14em; }
+  .viewer-head .ind { color: var(--accent); }
+  .viewer-body { flex: 1; display: grid; place-items: center; padding: 24px; min-height: 0; }
+  .frame { position: relative; box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04); }
+  .frame img { display: block; max-width: 100%; max-height: calc(100vh - 48px - 152px - 32px - 80px); }
+  .frame::before, .frame::after { content: ""; position: absolute; width: 18px; height: 18px; border: 1px solid var(--accent); }
+  .frame::before { left: -10px; top: -10px; border-right: 0; border-bottom: 0; }
+  .frame::after { right: -10px; bottom: -10px; border-left: 0; border-top: 0; }
+  .viewer-foot { height: 28px; display: flex; align-items: center; padding: 0 16px; gap: 16px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--dim); border-top: 1px solid var(--line); }
+  .viewer-foot .tc { color: var(--text); font-size: 13px; letter-spacing: 0.04em; }
+
+  /* right panel */
+  .panel { background: var(--mantle); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .tabs { display: flex; padding: 14px 14px 0; gap: 4px; }
+  .tabs .t { padding: 8px 14px; font-size: 11px; font-family: "JetBrains Mono", monospace; letter-spacing: 0.12em;
+    color: var(--dim); border-radius: 4px 4px 0 0; }
+  .tabs .t.active { background: var(--panel); color: var(--text); }
+  .tab-body { flex: 1; background: var(--panel); padding: 18px 18px 24px; overflow: auto; }
+  h3 { font-size: 10px; font-family: "JetBrains Mono", monospace; letter-spacing: 0.18em; color: var(--dim);
+    text-transform: uppercase; margin: 0 0 12px; font-weight: 500; }
+  h3:not(:first-child) { margin-top: 24px; }
+  .row { display: grid; grid-template-columns: 1fr 80px; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .row label { color: var(--subtext); font-size: 12px; }
+  .row .val { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--text); text-align: right; background: var(--surface0); padding: 4px 8px; border-radius: 3px; }
+  .slider { grid-column: 1 / -1; height: 28px; position: relative; }
+  .slider .track { position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: var(--surface0); }
+  .slider .fill { position: absolute; left: 0; top: 13px; height: 2px; background: var(--accent); }
+  .slider .knob { position: absolute; top: 8px; width: 12px; height: 12px; background: var(--text); border-radius: 50%;
+    transform: translateX(-50%); box-shadow: 0 0 0 4px var(--panel); }
+  .slider .tick { position: absolute; top: 18px; transform: translateX(-50%); font-family: "JetBrains Mono", monospace; font-size: 9px; color: var(--dim); }
+  select, input.tx { background: var(--surface0); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; color: var(--text);
+    font-size: 12px; font-family: inherit; width: 100%; appearance: none; }
+  select { background-image: linear-gradient(45deg, transparent 50%, var(--dim) 50%), linear-gradient(135deg, var(--dim) 50%, transparent 50%);
+    background-position: calc(100% - 14px) center, calc(100% - 10px) center; background-size: 4px 4px; background-repeat: no-repeat; padding-right: 24px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 11px; color: var(--subtext); margin-bottom: 5px; letter-spacing: 0.02em; }
+  .effect-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface0); border-radius: 4px; margin-bottom: 6px; }
+  .effect-row .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); }
+  .effect-row.on .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .effect-row .name { flex: 1; font-size: 12px; }
+  .effect-row .x { color: var(--dim); font-family: "JetBrains Mono", monospace; font-size: 11px; }
+  .export-btn { background: var(--accent); color: var(--crust); border: 0; padding: 12px; border-radius: 4px; width: 100%;
+    font-family: "JetBrains Mono", monospace; font-size: 12px; letter-spacing: 0.14em; font-weight: 700; margin-top: 8px; }
+
+  /* timeline */
+  .timeline { background: var(--mantle); border-top: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .tl-head { height: 30px; display: flex; align-items: center; padding: 0 16px; gap: 16px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--dim); border-bottom: 1px solid var(--line); }
+  .tl-head .play { color: var(--text); font-size: 14px; }
+  .tl-head .play-stop { color: var(--accent); }
+  .ruler { height: 14px; position: relative; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .ruler span { position: absolute; top: 1px; font-family: "JetBrains Mono", monospace; font-size: 9px; color: var(--dim); }
+  .ruler span::before { content: ""; position: absolute; left: 0; top: 12px; width: 1px; height: 4px; background: var(--dim); }
+  .tracks { flex: 1; display: flex; flex-direction: column; padding: 8px 16px 12px; gap: 6px; overflow: hidden; }
+  .track { display: grid; grid-template-columns: 70px 1fr; gap: 12px; align-items: center; }
+  .track .name { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--dim); letter-spacing: 0.08em; }
+  .track .lane { height: 30px; background: var(--panel); border-radius: 3px; position: relative; overflow: hidden; }
+  .track.video .lane { background:
+    linear-gradient(90deg,
+      transparent 0% 19%,
+      rgba(255,138,91,0.18) 19% 41%,
+      transparent 41% 100%); }
+  .track.video .clip { position: absolute; left: 19%; right: 59%; top: 0; bottom: 0; border-radius: 3px;
+    background: linear-gradient(to right, transparent, rgba(255,138,91,0.06), transparent),
+                repeating-linear-gradient(90deg, var(--surface0) 0 4px, var(--surface1) 4px 5px);
+    box-shadow: inset 0 0 0 1px var(--accent); }
+  .track .strip-frames { position: absolute; inset: 0; display: flex; gap: 1px; }
+  .track .strip-frames .f { flex: 1; background-size: cover; background-position: center; opacity: 0.85; }
+  .playhead { position: absolute; top: 30px; bottom: 0; width: 1px; background: var(--accent); left: 32%; }
+  .playhead::before { content: ""; position: absolute; top: -4px; left: -4px; border-style: solid; border-width: 6px 4.5px 0;
+    border-color: var(--accent) transparent transparent; }
+  .tl-body { flex: 1; min-height: 0; position: relative; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><b>◉</b> IMAGE&nbsp;TOOLS</div>
+    <div class="group">
+      <div class="gb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4h9l5 5v11H5z"/><path d="M14 4v5h5"/></svg><span>OPEN</span></div>
+      <div class="gb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v6h7V4M8 20v-7h8v7"/></svg><span>SAVE</span></div>
+    </div>
+    <div class="group">
+      <div class="gb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 14l-5-5 5-5M4 9h11a5 5 0 015 5v6"/></svg><span>UNDO</span></div>
+      <div class="gb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 14l5-5-5-5M20 9H9a5 5 0 00-5 5v6"/></svg><span>REDO</span></div>
+      <div class="gb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 5v14M5 12h14"/></svg><span>RESET</span></div>
+    </div>
+    <div class="group">
+      <div class="gb active"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="6" height="6"/><rect x="11" y="3" width="6" height="6" opacity=".5"/><rect x="3" y="11" width="6" height="6" opacity=".5"/><rect x="11" y="11" width="6" height="6"/></svg><span>MOSAIC</span></div>
+      <div class="gb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6" opacity=".5"/></svg><span>BLUR</span></div>
+      <div class="gb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 6h14M12 6v13"/></svg><span>TEXT</span></div>
+      <div class="gb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="12.5" r="3.5"/></svg><span>CAMERA</span></div>
+    </div>
+    <div class="group">
+      <div class="gb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h11l-3-3M20 17H9l3 3"/></svg><span>EXPORT</span></div>
+    </div>
+    <div class="mode-switch">
+      <div class="ms">IMAGE</div>
+      <div class="ms active">VIDEO</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <section class="viewer">
+      <div class="viewer-head">
+        <span class="lbl">SOURCE</span>
+        <span>sample.mp4</span>
+        <span>·</span>
+        <span>H.264</span>
+        <span>·</span>
+        <span>1920×1080 @ 24 fps</span>
+        <span style="flex:1"></span>
+        <span class="ind">● REC PREVIEW</span>
+      </div>
+      <div class="viewer-body">
+        <div class="frame"><img src="../docs/samples/vid-mosaic.jpg" alt="" /></div>
+      </div>
+      <div class="viewer-foot">
+        <span class="tc">00:00:02:08</span>
+        <span>·</span>
+        <span>frame 50 / 192</span>
+        <span style="flex:1"></span>
+        <span>fit 87%</span>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="tabs">
+        <div class="t">SOURCE</div>
+        <div class="t active">EFFECTS</div>
+        <div class="t">OUTPUT</div>
+      </div>
+      <div class="tab-body">
+        <h3>Active stack</h3>
+        <div class="effect-row on"><span class="dot"></span><span class="name">Mosaic</span><span class="x">40px · sel</span></div>
+        <div class="effect-row on"><span class="dot"></span><span class="name">Camera overlay</span><span class="x">batt 78</span></div>
+        <div class="effect-row"><span class="dot"></span><span class="name">Text layer</span><span class="x">— off —</span></div>
+
+        <h3>Mosaic parameters</h3>
+        <div class="row"><label>Block size</label><span class="val">40 px</span>
+          <div class="slider">
+            <div class="track"></div><div class="fill" style="width:42%"></div>
+            <div class="knob" style="left:42%"></div>
+            <span class="tick" style="left:0%">8</span><span class="tick" style="left:50%">48</span><span class="tick" style="left:100%">96</span>
+          </div>
+        </div>
+
+        <h3>Frame range</h3>
+        <div class="field"><label>FROM</label><input class="tx" value="00:00:01:12" /></div>
+        <div class="field"><label>TO</label><input class="tx" value="00:00:03:05" /></div>
+        <div class="field"><label>APPLY TO</label>
+          <select><option>Range (41 frames)</option><option>Current frame</option><option>All frames</option></select>
+        </div>
+
+        <h3>Selection</h3>
+        <div class="field"><label>MODE</label>
+          <select><option>Rectangle</option><option>Lasso</option></select>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="timeline">
+    <div class="tl-head">
+      <span class="play">▶</span>
+      <span>00:00:02:08 / 00:00:08:00</span>
+      <span>·</span>
+      <span class="play-stop">LOOP</span>
+      <span style="flex:1"></span>
+      <span>192 frames</span><span>·</span><span>24 fps</span>
+    </div>
+    <div class="tl-body">
+      <div class="ruler">
+        <span style="left:0%">00:00</span><span style="left:12.5%">01:00</span><span style="left:25%">02:00</span>
+        <span style="left:37.5%">03:00</span><span style="left:50%">04:00</span><span style="left:62.5%">05:00</span>
+        <span style="left:75%">06:00</span><span style="left:87.5%">07:00</span>
+      </div>
+      <div class="tracks">
+        <div class="track video">
+          <div class="name">V1 · CLIP</div>
+          <div class="lane">
+            <div class="strip-frames">
+              <div class="f" style="background-image:url(../docs/samples/vid-original.jpg)"></div>
+              <div class="f" style="background-image:url(../docs/samples/vid-original.jpg)"></div>
+              <div class="f" style="background-image:url(../docs/samples/vid-original.jpg)"></div>
+              <div class="f" style="background-image:url(../docs/samples/vid-mosaic.jpg)"></div>
+              <div class="f" style="background-image:url(../docs/samples/vid-mosaic.jpg)"></div>
+              <div class="f" style="background-image:url(../docs/samples/vid-mosaic.jpg)"></div>
+              <div class="f" style="background-image:url(../docs/samples/vid-mosaic.jpg)"></div>
+              <div class="f" style="background-image:url(../docs/samples/vid-mosaic.jpg)"></div>
+              <div class="f" style="background-image:url(../docs/samples/vid-original.jpg)"></div>
+              <div class="f" style="background-image:url(../docs/samples/vid-original.jpg)"></div>
+              <div class="f" style="background-image:url(../docs/samples/vid-original.jpg)"></div>
+              <div class="f" style="background-image:url(../docs/samples/vid-original.jpg)"></div>
+            </div>
+            <div class="clip"></div>
+          </div>
+        </div>
+        <div class="track">
+          <div class="name">FX · MOSAIC</div>
+          <div class="lane" style="background: linear-gradient(90deg, transparent 19%, rgba(255,138,91,0.25) 19% 41%, transparent 41%);"></div>
+        </div>
+        <div class="track">
+          <div class="name">FX · CAMERA</div>
+          <div class="lane" style="background: linear-gradient(90deg, transparent 19%, rgba(93,214,196,0.18) 19% 41%, transparent 41%);"></div>
+        </div>
+      </div>
+      <div class="playhead" style="left: calc(16px + 70px + 12px + (100% - 16px - 70px - 12px - 16px) * 0.32);"></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

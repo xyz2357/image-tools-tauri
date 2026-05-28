@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<title>Variant C · Lightroom-style</title>
+<style>
+  :root {
+    --crust: #1a1a1a; --base: #232323; --mantle: #1e1e1e; --panel: #2a2a2a;
+    --surface0: #333; --surface1: #3e3e3e; --line: #2a2a2a;
+    --text: #d4d4d4; --subtext: #8a8a8a; --dim: #5a5a5a;
+    --accent: #5fb3f5;
+    --warm: #d4a574;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--crust); color: var(--text);
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif; font-size: 13px; overflow: hidden;
+    font-weight: 300; }
+  .app { display: grid; grid-template-columns: 200px 1fr 320px; grid-template-rows: 40px 1fr; height: 100vh; }
+
+  /* top */
+  .topbar { grid-column: 1 / -1; background: var(--mantle); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; padding: 0 20px; gap: 28px; }
+  .topbar .logo { font-family: "Cormorant Garamond", "Times New Roman", serif; font-style: italic; font-size: 18px;
+    color: var(--text); letter-spacing: 0.04em; }
+  .topbar .logo b { font-weight: 600; color: var(--warm); }
+  .topbar .modules { display: flex; gap: 20px; margin-left: auto; }
+  .topbar .module { font-family: "Inter", sans-serif; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--dim); font-weight: 500; }
+  .topbar .module.active { color: var(--text); }
+  .topbar .module.active::after { content: ""; display: block; height: 1px; background: var(--warm); margin-top: 4px; }
+
+  /* left thumb column */
+  .strip { background: var(--mantle); border-right: 1px solid var(--line); overflow: hidden;
+    display: flex; flex-direction: column; min-height: 0; }
+  .strip-head { padding: 14px 16px 10px; border-bottom: 1px solid var(--line); }
+  .strip-head .label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); }
+  .strip-head .name { font-size: 13px; color: var(--text); margin-top: 4px; }
+  .strip-head .meta { font-size: 11px; color: var(--subtext); margin-top: 2px; font-family: "JetBrains Mono", monospace; }
+  .thumbs { flex: 1; overflow: auto; padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-content: start; }
+  .thumb { aspect-ratio: 16/9; background: #000; border-radius: 2px; overflow: hidden; position: relative; cursor: default; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.7; }
+  .thumb:hover img { opacity: 0.95; }
+  .thumb.active { box-shadow: 0 0 0 2px var(--warm); }
+  .thumb.active img { opacity: 1; }
+  .thumb .n { position: absolute; top: 3px; left: 4px; font-family: "JetBrains Mono", monospace; font-size: 9px; color: #fff; text-shadow: 0 1px 2px #000; }
+  .thumb.flag::before { content: ""; position: absolute; right: 4px; top: 4px; width: 6px; height: 6px; background: var(--warm); border-radius: 50%; }
+
+  /* canvas */
+  .canvas-area { background: #1a1a1a; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .canvas-toolbar { height: 36px; display: flex; align-items: center; padding: 0 20px; gap: 18px;
+    font-size: 11px; color: var(--subtext); border-bottom: 1px solid var(--line); }
+  .crumb { font-family: "Cormorant Garamond", serif; font-style: italic; color: var(--text); font-size: 14px; }
+  .canvas-toolbar .seg { display: flex; background: var(--surface0); border-radius: 3px; padding: 2px; gap: 1px; }
+  .canvas-toolbar .seg span { padding: 4px 12px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--subtext); border-radius: 2px; }
+  .canvas-toolbar .seg span.on { background: var(--surface1); color: var(--text); }
+  .canvas-toolbar .grow { flex: 1; }
+  .canvas-toolbar .ratings { display: flex; gap: 6px; font-family: "JetBrains Mono", monospace; font-size: 11px; }
+  .canvas-toolbar .ratings .star { color: var(--warm); }
+  .canvas-wrap { flex: 1; display: grid; place-items: center; padding: 32px; background:
+    radial-gradient(ellipse at center, #1f1f1f 0%, #141414 100%); min-height: 0; }
+  .canvas-img { max-width: 100%; max-height: 100%; box-shadow: 0 30px 80px rgba(0,0,0,.7); position: relative; }
+  .canvas-img img { display: block; max-width: 100%; max-height: calc(100vh - 40px - 36px - 80px - 50px); }
+  .canvas-img .compare { position: absolute; left: 0; top: 0; bottom: 0; width: 48%; overflow: hidden; pointer-events: none; }
+  .canvas-img .compare img { position: absolute; left: 0; top: 0; max-width: none; height: 100%; }
+  .canvas-img .divider { position: absolute; top: 0; bottom: 0; left: 48%; width: 1px; background: var(--text); opacity: .8; }
+  .canvas-img .divider::before { content: "BEFORE"; position: absolute; top: 12px; right: 10px; font-family: "JetBrains Mono", monospace; font-size: 9px; letter-spacing: 0.18em; color: var(--text); }
+  .canvas-img .divider::after { content: "AFTER"; position: absolute; top: 12px; left: 10px; font-family: "JetBrains Mono", monospace; font-size: 9px; letter-spacing: 0.18em; color: var(--text); }
+  .scrubber { height: 36px; border-top: 1px solid var(--line); display: flex; align-items: center; padding: 0 20px; gap: 14px; }
+  .scrubber .time { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--text); }
+  .scrubber .bar { flex: 1; height: 3px; background: var(--surface0); border-radius: 2px; position: relative; }
+  .scrubber .bar .pl { position: absolute; left: 0; top: 0; bottom: 0; width: 26%; background: var(--warm); border-radius: 2px; }
+  .scrubber .bar .head { position: absolute; left: 26%; top: -4px; width: 2px; height: 11px; background: var(--text); }
+
+  /* right accordion */
+  .inspector { background: var(--mantle); border-left: 1px solid var(--line); overflow: auto; }
+  .acc { border-bottom: 1px solid var(--line); }
+  .acc-head { padding: 16px 20px 14px; display: flex; align-items: center; justify-content: space-between; cursor: default; }
+  .acc-head h3 { font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 17px; font-weight: 500; margin: 0; color: var(--text); letter-spacing: 0.01em; }
+  .acc-head .chev { color: var(--dim); font-size: 11px; }
+  .acc-body { padding: 0 20px 20px; display: block; }
+  .acc.collapsed .acc-body { display: none; }
+  .acc.collapsed .chev { transform: rotate(-90deg); }
+  .field { margin-bottom: 14px; }
+  .field-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; }
+  .field-label .l { color: var(--subtext); }
+  .field-label .v { color: var(--text); font-family: "JetBrains Mono", monospace; }
+  .slider { height: 14px; position: relative; }
+  .slider .track { position: absolute; left: 0; right: 0; top: 6px; height: 2px; background: var(--surface0); }
+  .slider .fill { position: absolute; top: 6px; height: 2px; background: var(--warm); }
+  .slider .knob { position: absolute; top: 1px; width: 12px; height: 12px; background: var(--text); border-radius: 50%; transform: translateX(-50%);
+    box-shadow: 0 1px 3px rgba(0,0,0,.5); }
+  .slider .mid { position: absolute; top: 0; left: 50%; width: 1px; height: 14px; background: var(--surface1); }
+  select, input.tx { background: transparent; border: 0; border-bottom: 1px solid var(--surface1); padding: 6px 0; color: var(--text);
+    font-size: 12px; font-family: inherit; width: 100%; appearance: none; }
+  select { background-image: linear-gradient(45deg, transparent 50%, var(--dim) 50%), linear-gradient(135deg, var(--dim) 50%, transparent 50%);
+    background-position: calc(100% - 8px) center, calc(100% - 4px) center; background-size: 4px 4px; background-repeat: no-repeat; }
+  .toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--subtext); margin-bottom: 8px; }
+  .toggle .sw { width: 26px; height: 14px; background: var(--surface0); border-radius: 7px; position: relative; }
+  .toggle.on .sw { background: var(--warm); }
+  .toggle .sw::after { content: ""; position: absolute; top: 1px; left: 1px; width: 12px; height: 12px; background: var(--text); border-radius: 50%; }
+  .toggle.on .sw::after { left: 13px; }
+  .seg-row { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface0); border-radius: 3px; padding: 2px; margin-bottom: 12px; gap: 1px; }
+  .seg-row span { text-align: center; padding: 6px; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--subtext); border-radius: 2px; }
+  .seg-row span.on { background: var(--surface1); color: var(--text); }
+  .export-btn { width: 100%; padding: 11px; background: transparent; color: var(--text); border: 1px solid var(--warm); border-radius: 2px;
+    font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 15px; letter-spacing: 0.04em; margin-top: 8px; }
+  .est { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--dim); margin-top: 6px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="logo"><b>Image</b> Tools</div>
+    <div class="modules">
+      <span class="module">Library</span>
+      <span class="module active">Develop</span>
+      <span class="module">Export</span>
+    </div>
+  </div>
+
+  <aside class="strip">
+    <div class="strip-head">
+      <div class="label">Source</div>
+      <div class="name">sample.mp4</div>
+      <div class="meta">192 frames · 24 fps · 1920×1080</div>
+    </div>
+    <div class="thumbs">
+      <div class="thumb"><img src="../docs/samples/vid-original.jpg"><span class="n">01</span></div>
+      <div class="thumb flag"><img src="../docs/samples/vid-original.jpg"><span class="n">02</span></div>
+      <div class="thumb flag"><img src="../docs/samples/vid-original.jpg"><span class="n">03</span></div>
+      <div class="thumb flag active"><img src="../docs/samples/vid-mosaic.jpg"><span class="n">04</span></div>
+      <div class="thumb flag"><img src="../docs/samples/vid-mosaic.jpg"><span class="n">05</span></div>
+      <div class="thumb flag"><img src="../docs/samples/vid-mosaic.jpg"><span class="n">06</span></div>
+      <div class="thumb"><img src="../docs/samples/vid-original.jpg"><span class="n">07</span></div>
+      <div class="thumb"><img src="../docs/samples/vid-original.jpg"><span class="n">08</span></div>
+      <div class="thumb"><img src="../docs/samples/vid-original.jpg"><span class="n">09</span></div>
+      <div class="thumb"><img src="../docs/samples/vid-original.jpg"><span class="n">10</span></div>
+      <div class="thumb"><img src="../docs/samples/vid-camera.jpg"><span class="n">11</span></div>
+      <div class="thumb"><img src="../docs/samples/vid-camera.jpg"><span class="n">12</span></div>
+      <div class="thumb"><img src="../docs/samples/vid-original.jpg"><span class="n">13</span></div>
+      <div class="thumb"><img src="../docs/samples/vid-original.jpg"><span class="n">14</span></div>
+    </div>
+  </aside>
+
+  <main class="canvas-area">
+    <div class="canvas-toolbar">
+      <span class="crumb">sample.mp4 — frame 04</span>
+      <span style="color: var(--dim)">/</span>
+      <span>Mosaic 40px on selection</span>
+      <span class="grow"></span>
+      <div class="seg">
+        <span>Single</span><span class="on">Compare</span><span>Grid</span>
+      </div>
+      <span class="ratings"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span style="color:var(--dim)">★ ★</span></span>
+    </div>
+    <div class="canvas-wrap">
+      <div class="canvas-img">
+        <img src="../docs/samples/vid-mosaic.jpg" alt="" />
+        <div class="compare"><img src="../docs/samples/vid-original.jpg" alt="" /></div>
+        <div class="divider"></div>
+      </div>
+    </div>
+    <div class="scrubber">
+      <span style="color:var(--text); font-size:14px;">▶</span>
+      <span class="time">00:00:02.083</span>
+      <div class="bar"><div class="pl"></div><div class="head"></div></div>
+      <span class="time" style="color: var(--dim)">00:00:08.000</span>
+    </div>
+  </main>
+
+  <aside class="inspector">
+    <div class="acc">
+      <div class="acc-head"><h3>Selection</h3><span class="chev">∨</span></div>
+      <div class="acc-body">
+        <div class="seg-row"><span class="on">Rectangle</span><span>Lasso</span></div>
+        <div class="field">
+          <div class="field-label"><span class="l">Origin</span><span class="v">412, 218</span></div>
+        </div>
+        <div class="field">
+          <div class="field-label"><span class="l">Size</span><span class="v">980 × 540</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="acc">
+      <div class="acc-head"><h3>Mosaic</h3><span class="chev">∨</span></div>
+      <div class="acc-body">
+        <div class="field">
+          <div class="field-label"><span class="l">Block size</span><span class="v">+40</span></div>
+          <div class="slider"><div class="track"></div><div class="mid"></div><div class="fill" style="left:50%; width:21%"></div><div class="knob" style="left:71%"></div></div>
+        </div>
+        <div class="toggle on"><div class="sw"></div>Apply to current selection only</div>
+        <div class="toggle"><div class="sw"></div>Preview live</div>
+      </div>
+    </div>
+
+    <div class="acc">
+      <div class="acc-head"><h3>Camera Overlay</h3><span class="chev">∨</span></div>
+      <div class="acc-body">
+        <div class="field">
+          <div class="field-label"><span class="l">Battery</span><span class="v">78%</span></div>
+          <div class="slider"><div class="track"></div><div class="fill" style="width:78%"></div><div class="knob" style="left:78%"></div></div>
+        </div>
+        <div class="field">
+          <div class="field-label"><span class="l">Timer</span><span class="v">00:01:23.4</span></div>
+          <input class="tx" value="00:01:23.456" />
+        </div>
+      </div>
+    </div>
+
+    <div class="acc collapsed">
+      <div class="acc-head"><h3>Frame Range</h3><span class="chev">∨</span></div>
+      <div class="acc-body"></div>
+    </div>
+
+    <div class="acc">
+      <div class="acc-head"><h3>Output</h3><span class="chev">∨</span></div>
+      <div class="acc-body">
+        <div class="field">
+          <div class="field-label"><span class="l">Format</span></div>
+          <select><option>MP4 (H.264)</option><option>GIF</option><option>WebP</option><option>APNG</option><option>Ugoira</option></select>
+        </div>
+        <div class="field">
+          <div class="field-label"><span class="l">Preset</span></div>
+          <select><option>Balanced</option><option>High quality</option><option>Smallest size</option></select>
+        </div>
+        <div class="field">
+          <div class="field-label"><span class="l">Scale</span><span class="v">100%</span></div>
+          <div class="slider"><div class="track"></div><div class="fill" style="width:100%"></div><div class="knob" style="left:100%"></div></div>
+        </div>
+        <button class="export-btn">Export 41 frames</button>
+        <div class="est">est. 4.2 MB · 6 sec render</div>
+      </div>
+    </div>
+  </aside>
+</div>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<title>Unified UI — Mockups</title>
+<style>
+  :root {
+    --crust: #11111b;
+    --base: #1e1e2e;
+    --mantle: #181825;
+    --surface0: #313244;
+    --surface1: #45475a;
+    --text: #cdd6f4;
+    --subtext: #a6adc8;
+    --mauve: #cba6f7;
+    --blue: #89b4fa;
+    --teal: #94e2d5;
+    --peach: #fab387;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--crust); color: var(--text); font-family: "Inter", "Segoe UI", system-ui, sans-serif; }
+  body { min-height: 100vh; padding: 64px 48px; }
+  h1 { font-family: "IBM Plex Serif", Georgia, serif; font-weight: 500; font-size: 32px; letter-spacing: -0.02em; margin: 0 0 8px; }
+  .lede { color: var(--subtext); font-size: 14px; margin: 0 0 48px; max-width: 640px; line-height: 1.6; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 1280px; }
+  .card { background: var(--base); border: 1px solid var(--surface0); border-radius: 12px; overflow: hidden; text-decoration: none; color: inherit; transition: transform .15s ease, border-color .15s ease; display: flex; flex-direction: column; }
+  .card:hover { transform: translateY(-2px); border-color: var(--mauve); }
+  .preview { aspect-ratio: 16/9; background: var(--mantle); display: flex; align-items: center; justify-content: center; font-family: "JetBrains Mono", "Consolas", monospace; font-size: 88px; color: var(--surface1); font-weight: 700; }
+  .meta { padding: 20px 24px; border-top: 1px solid var(--surface0); }
+  .tag { display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--mauve); text-transform: uppercase; margin-bottom: 6px; }
+  .title { font-family: "IBM Plex Serif", Georgia, serif; font-size: 20px; margin: 0 0 6px; font-weight: 500; }
+  .desc { color: var(--subtext); font-size: 13px; line-height: 1.5; margin: 0; }
+  .pa { color: var(--blue); } .pb { color: var(--teal); } .pc { color: var(--peach); } .pd { color: var(--mauve); }
+</style>
+</head>
+<body>
+  <h1>Aesthetic explorations</h1>
+  <p class="lede">保留现在的 UX（顶 toolbar / 双 tab / 左画布 + 右 pill-bar），换 3 种审美方向。下面 4 个是更早的整体重排版变体（UX 改动较大）。</p>
+  <h2 style="font-family:'IBM Plex Serif',Georgia,serif;font-weight:500;font-size:18px;letter-spacing:-0.01em;margin:0 0 14px;color:var(--text)">同 UX，换审美</h2>
+  <div class="grid" style="margin-bottom:56px">
+    <a class="card" href="aesthetic-1-refined.html">
+      <div class="preview pd">1</div>
+      <div class="meta"><span class="tag">Refined · Catppuccin+</span><h2 class="title">Warm Serif</h2><p class="desc">Fraunces 显示字体 + Inter 正文 + JetBrains Mono 技术细节。配色还是 Catppuccin Mocha，但用暖橘色 (#f5c2a7) 替换原来的紫色作 accent。Phosphor 风线性图标。</p></div>
+    </a>
+    <a class="card" href="aesthetic-2-editorial.html">
+      <div class="preview pc">2</div>
+      <div class="meta"><span class="tag">Editorial · Magazine</span><h2 class="title">Instrument Serif · Geist</h2><p class="desc">近黑底 + 纸白文字 + 朱砂红 accent。Tab 用罗马数字编号，工具标题做杂志大标题。高对比 + 严谨字号节奏。</p></div>
+    </a>
+    <a class="card" href="aesthetic-3-soft.html">
+      <div class="preview pb">3</div>
+      <div class="meta"><span class="tag">Soft · Card-based</span><h2 class="title">DM Sans · Mint</h2><p class="desc">偏紫的暖深底 + 薄荷绿 accent。卡片化布局，圆角 14-18px，参数行有自己的背景色块。最"友好"的一版。</p></div>
+    </a>
+  </div>
+
+  <h2 style="font-family:'IBM Plex Serif',Georgia,serif;font-weight:500;font-size:18px;letter-spacing:-0.01em;margin:0 0 14px;color:var(--text)">改 UX · 整体重排（之前那批）</h2>
+  <div class="grid">
+    <a class="card" href="variant-a-photoshop.html">
+      <div class="preview pa">A</div>
+      <div class="meta"><span class="tag">Variant A</span><h2 class="title">Photoshop</h2><p class="desc">左侧图标栏 · 中央画布 · 右属性面板 · 视频模式下底部帧条。信息密度最高。</p></div>
+    </a>
+    <a class="card" href="variant-b-davinci.html">
+      <div class="preview pb">B</div>
+      <div class="meta"><span class="tag">Variant B</span><h2 class="title">DaVinci Resolve</h2><p class="desc">顶部主操作栏 · 中央画布 · 右侧 tab 面板 (Source / Effects / Output) · 底部时间轴。</p></div>
+    </a>
+    <a class="card" href="variant-c-lightroom.html">
+      <div class="preview pc">C</div>
+      <div class="meta"><span class="tag">Variant C</span><h2 class="title">Lightroom</h2><p class="desc">左缩略图带 · 中央画布 · 右侧折叠手风琴 (Selection / Effect / Output)。摄影工作流感。</p></div>
+    </a>
+    <a class="card" href="variant-d-minimal.html">
+      <div class="preview pd">D</div>
+      <div class="meta"><span class="tag">Variant D</span><h2 class="title">Minimal</h2><p class="desc">画布占主导 · 极薄顶栏与右栏 · 模式自动切换 · 视频时 scrubber 浮在画布底部。</p></div>
+    </a>
+  </div>
+</body>
+</html>

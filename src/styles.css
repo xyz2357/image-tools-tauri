@@ -1,51 +1,253 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ──────────────────────────────────────────────────────────────
+   Aesthetic 3 · Soft (DM Sans + DM Mono · mint accent)
+   Layout/UX matches the original; classes & IDs are preserved.
+   ────────────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("./assets/fonts/dm-sans-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
+@font-face {
+  font-family: "DM Sans";
+  src: url("./assets/fonts/dm-sans-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "DM Sans";
+  src: url("./assets/fonts/dm-sans-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "DM Mono";
+  src: url("./assets/fonts/dm-mono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "DM Mono";
+  src: url("./assets/fonts/dm-mono-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --crust:    #1a1822;
+  --base:     #211e2c;
+  --mantle:   #1c1a26;
+  --surface0: #2e2a3c;
+  --surface1: #3d384f;
+  --surface2: #4d4664;
+  --text:     #ece6ff;
+  --subtext:  #b6aed1;
+  --dim:      #807898;
+  --accent:   #8be3c9;
+  --accent-d: #6fcdb2;
+  --accent2:  #f5b8d1;
+  --warn:     #ffd49a;
+  --red:      #f5728e;
+  --green:    #a6e3a1;
+
+  --font-body: "DM Sans", "Microsoft YaHei UI", "Microsoft YaHei",
+               "PingFang SC", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "DM Mono", "Consolas", "Cascadia Mono", monospace;
+
+  --radius-card: 16px;
+  --radius-md:   12px;
+  --radius-sm:   8px;
+  --radius-pill: 999px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-  background: #1e1e2e;
-  color: #cdd6f4;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  background: var(--mantle);
+  color: var(--text);
   overflow: hidden;
   height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-.app {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
+.app { display: flex; flex-direction: column; height: 100vh; }
 
-/* ── Tab bars ─────────────────────────────────────────── */
+/* ── Top toolbar ────────────────────────────────────── */
 
-.tab-bar {
+.top-toolbar {
   display: flex;
-  background: #181825;
-  border-bottom: 1px solid #313244;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px;
+  background: transparent;
+  border-bottom: 1px solid var(--surface0);
   flex-shrink: 0;
 }
 
-.tab-btn {
-  padding: 8px 20px;
-  background: none;
-  border: none;
-  color: #6c7086;
+.top-toolbar button,
+.tt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--surface0);
+  color: var(--text);
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 8px 13px;
+  font: 500 12.5px/1 var(--font-body);
   cursor: pointer;
-  font-size: 13px;
-  border-bottom: 2px solid transparent;
-  transition: all 0.15s;
+  transition: background 0.12s ease;
 }
 
-.tab-btn:hover {
-  color: #cdd6f4;
-  background: #1e1e2e;
+.top-toolbar button:hover:not(:disabled),
+.tt-btn:hover:not(:disabled) { background: var(--surface1); }
+
+.top-toolbar button:disabled,
+.tt-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.top-toolbar button .i,
+.tt-btn .i {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  display: block;
 }
+
+#btn-open, .tt-primary {
+  background: var(--accent);
+  color: var(--crust);
+  font-weight: 600;
+}
+#btn-open:hover:not(:disabled), .tt-primary:hover:not(:disabled) {
+  background: var(--accent-d);
+}
+
+.tt-icon { padding: 8px; }
+.tt-icon .i { width: 16px; height: 16px; }
+
+.top-filename {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: var(--surface0);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--subtext);
+  max-width: 360px;
+  margin: 0 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-filename .dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--dim);
+  flex-shrink: 0;
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.top-filename.loaded .dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(139, 227, 201, 0.18);
+}
+
+.top-toolbar .top-spacer { flex: 1; }
+
+/* segmented (rect / lasso) — pill group inside surface0 capsule */
+.seg {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--surface0);
+  border-radius: var(--radius-md);
+}
+
+.seg button {
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  padding: 6px 12px;
+  font: 500 12px/1 var(--font-body);
+  color: var(--subtext);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.seg button:hover:not(:disabled) { background: transparent; color: var(--text); }
+
+.seg button .i { width: 13px; height: 13px; }
+
+.seg button.active {
+  background: var(--base);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Tab bar ─────────────────────────────────────────── */
+
+.tab-bar {
+  display: flex;
+  gap: 6px;
+  padding: 14px 16px 0;
+  background: transparent;
+  position: relative;
+  flex-shrink: 0;
+}
+.tab-bar::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: var(--surface1);
+}
+
+.tab-btn {
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid var(--surface1);
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  color: var(--subtext);
+  cursor: pointer;
+  font: 500 13px/1 var(--font-body);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+
+.tab-btn .i { width: 14px; height: 14px; opacity: 0.8; }
+
+.tab-btn:hover { color: var(--text); }
 
 .tab-btn.active {
-  color: #89b4fa;
-  border-bottom-color: #89b4fa;
+  background: var(--base);
+  color: var(--text);
+}
+
+.tab-btn.active .i { opacity: 1; color: var(--accent); }
+
+.tab-btn.active::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  background: var(--base);
 }
 
 .tab-content {
@@ -53,43 +255,73 @@ body {
   flex: 1;
   overflow: hidden;
   min-height: 0;
+  padding: 16px;
+  gap: 16px;
+  background: var(--mantle);
 }
 
 .tab-content.active {
   display: flex;
 }
 
-.conversion-layout, .image-tools-layout {
-  min-height: 0;
-}
+/* ── Image tools / conversion layout (both card-based) ─── */
 
-.conv-preview-area, .image-area {
-  min-height: 0;
-}
-
-/* ── Image Tools layout ──────────────────────────────── */
-
-.image-tools-layout {
+.image-tools-layout,
+.conversion-layout {
   display: flex;
   flex: 1;
+  gap: 16px;
+  min-height: 0;
   overflow: hidden;
 }
 
-.image-area {
+.image-area,
+.conv-preview-area {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  background: var(--base);
+  border-radius: var(--radius-card);
   overflow: hidden;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+              0 14px 30px rgba(0, 0, 0, 0.22);
 }
 
-.canvas-scroll {
+.tools-panel,
+.conv-controls-panel {
+  width: 360px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--base);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+              0 14px 30px rgba(0, 0, 0, 0.22);
+}
+
+/* ── Canvas areas ────────────────────────────────────── */
+
+.canvas-scroll,
+.conv-preview-scroll {
   flex: 1;
   overflow: auto;
-  background: #11111b;
+  background:
+    radial-gradient(ellipse at 50% 35%, #2a2638 0%, #1c1928 70%, #181623 100%);
   position: relative;
+  min-height: 0;
 }
 
-.canvas-scroll.empty {
+.conv-preview-scroll {
+  display: flex;
+  align-items: safe center;
+  justify-content: safe center;
+}
+
+.canvas-scroll.empty,
+.conv-preview-scroll.empty {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -98,829 +330,142 @@ body {
 
 .canvas-scroll.empty::after {
   content: "点击或拖入图片";
-  color: #585b70;
-  font-size: 16px;
-}
-
-.canvas-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
-.canvas-wrapper canvas {
-  display: block;
-}
-
-#main-canvas {
-  background: repeating-conic-gradient(#45475a 0% 25%, #313244 0% 50%) 50% / 16px 16px;
-}
-
-#text-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-}
-
-#overlay-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  cursor: crosshair;
-}
-
-.image-controls {
-  display: flex;
-  gap: 4px;
-  padding: 6px 8px;
-  background: #181825;
-  border-top: 1px solid #313244;
-  flex-shrink: 0;
-}
-
-.image-controls button {
-  flex: 1;
-  padding: 8px 4px;
-  background: #313244;
-  border: 1px solid #45475a;
-  color: #cdd6f4;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: background 0.15s;
-  white-space: nowrap;
-}
-
-.image-controls button:hover {
-  background: #45475a;
-}
-
-/* ── Tools panel ─────────────────────────────────────── */
-
-.tools-panel {
-  width: 380px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  border-left: 1px solid #313244;
-  background: #1e1e2e;
-}
-
-.tool-tabs {
-  background: #181825;
-}
-
-.tool-tabs .tab-btn {
-  font-size: 12px;
-  padding: 6px 12px;
-}
-
-.tool-content {
-  display: none;
-  padding: 16px;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.tool-content.active {
-  display: flex;
-}
-
-.tool-content label {
-  font-size: 13px;
-  color: #a6adc8;
-}
-
-.tool-content input[type="range"] {
-  width: 100%;
-  accent-color: #89b4fa;
-}
-
-.tool-content input[type="text"],
-.tool-content select {
-  width: 100%;
-  padding: 6px 10px;
-  background: #313244;
-  border: 1px solid #45475a;
-  color: #cdd6f4;
-  border-radius: 4px;
-  font-size: 13px;
-}
-
-.tool-content input[type="color"] {
-  width: 40px;
-  height: 30px;
-  padding: 0;
-  border: 1px solid #45475a;
-  border-radius: 4px;
-  background: #313244;
-  cursor: pointer;
-}
-
-.tool-content select {
-  cursor: pointer;
-}
-
-.form-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.form-row label {
-  white-space: nowrap;
-  min-width: 60px;
-}
-
-.form-row input[type="range"] {
-  flex: 1;
-}
-
-.preview-row {
-  display: flex;
-  justify-content: center;
-}
-
-.preview-row canvas {
-  border: 1px solid #45475a;
-  border-radius: 4px;
-  background: #fff;
-}
-
-.btn-apply {
-  padding: 10px;
-  background: #89b4fa;
-  color: #1e1e2e;
-  border: none;
-  border-radius: 6px;
+  color: var(--dim);
   font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-  margin-top: 4px;
-}
-
-.btn-apply:hover {
-  background: #74c7ec;
-}
-
-/* ── Text layer list ───────────────────────────────── */
-
-.text-layer-section {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 8px;
-}
-
-.text-layer-header {
-  font-size: 12px;
-  color: #89b4fa;
-  font-weight: 600;
-}
-
-.text-layer-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  max-height: 150px;
-  overflow-y: auto;
-}
-
-.text-layer-item {
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  background: #313244;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: background 0.1s;
-}
-
-.text-layer-item.selected {
-  border-color: #89b4fa;
-  background: #45475a;
-}
-
-.text-layer-item:hover {
-  background: #45475a;
-}
-
-.text-layer-preview {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #cdd6f4;
-}
-
-.text-layer-delete {
-  background: none;
-  border: none;
-  color: #f38ba8;
-  cursor: pointer;
-  font-size: 16px;
-  padding: 0 4px;
-  line-height: 1;
-}
-
-/* ── Conversion tab ─────────────────────────────────── */
-
-.conversion-layout {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-.conv-preview-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.conv-preview-scroll {
-  flex: 1;
-  overflow: auto;
-  background: #11111b;
-  display: flex;
-  /* `safe center` falls back to start-alignment when content overflows the
-     scroll viewport — otherwise the centered child gets pushed into
-     un-scrollable negative margin (top half of tall videos disappears). */
-  align-items: safe center;
-  justify-content: safe center;
-  min-height: 0;
-}
-
-.conv-preview-scroll.empty {
-  cursor: pointer;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .conv-preview-scroll.empty::after {
   content: "点击或拖入视频 / GIF / WebP / 图片序列";
-  color: #585b70;
-  font-size: 16px;
+  color: var(--dim);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .conv-preview-scroll.drag-over {
-  outline: 2px dashed #89b4fa;
-  outline-offset: -8px;
-  background: #181828;
+  outline: 2px dashed var(--accent);
+  outline-offset: -10px;
+  background: rgba(139, 227, 201, 0.04);
 }
 
-.conv-preview-scroll {
+.canvas-wrapper,
+.conv-canvas-wrapper {
   position: relative;
+  display: inline-block;
 }
 
+.canvas-wrapper canvas,
+.conv-canvas-wrapper canvas { display: block; }
+
+#main-canvas {
+  background: repeating-conic-gradient(var(--surface1) 0% 25%, var(--surface0) 0% 50%)
+              50% / 16px 16px;
+}
+
+#text-canvas,
+#overlay-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+#text-canvas { pointer-events: none; }
+#overlay-canvas { cursor: crosshair; }
+
+.conv-preview-scroll.empty .conv-canvas-wrapper { display: none; }
+#conv-overlay-canvas { position: absolute; top: 0; left: 0; cursor: crosshair; }
+
+/* loading overlay */
 .conv-loading-overlay {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(17, 17, 27, 0.85);
+  background: rgba(26, 24, 34, 0.78);
+  backdrop-filter: blur(8px);
   z-index: 10;
 }
 
 .conv-loading-inner {
-  min-width: 320px;
+  min-width: 300px;
   padding: 18px 22px;
-  background: #1e1e2e;
-  border: 1px solid #313244;
-  border-radius: 8px;
+  background: var(--base);
+  border: 1px solid var(--surface1);
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   gap: 10px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
 }
 
-.conv-loading-label {
-  color: #cdd6f4;
-  font-size: 14px;
-}
-
-.conv-loading-overlay .conv-progress-bar {
-  height: 10px;
-  background: #313244;
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.conv-loading-overlay .conv-progress-fill {
-  height: 100%;
-  background: #89b4fa;
-  width: 0%;
-  transition: width 80ms ease-out;
-}
-
+.conv-loading-label { color: var(--text); font-size: 13.5px; font-weight: 500; }
 .conv-loading-overlay #conv-loading-text {
-  color: #a6adc8;
-  font-size: 12px;
+  color: var(--subtext); font-size: 11.5px;
+  font-family: var(--font-mono);
   align-self: flex-end;
 }
 
-.conv-preview-scroll.empty .conv-canvas-wrapper {
-  display: none;
-}
-
-/* Canvas wrapper sizes to the canvas's native pixel resolution; when
-   the video is larger than the preview area, the .conv-preview-scroll
-   parent scrolls (overflow: auto). */
-.conv-canvas-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
-.conv-canvas-wrapper canvas {
-  display: block;
-}
-
-#conv-overlay-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  cursor: crosshair;
-}
+/* ── Conversion frame controls (bottom of preview) ───── */
 
 .conv-frame-controls {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 8px;
-  background: #181825;
-  border-top: 1px solid #313244;
+  padding: 10px 12px;
+  background: transparent;
+  border-top: 1px solid var(--surface0);
   flex-shrink: 0;
 }
 
 .conv-frame-controls button {
-  padding: 4px 10px;
-  background: #313244;
-  border: 1px solid #45475a;
-  color: #cdd6f4;
-  border-radius: 4px;
+  padding: 6px 12px;
+  background: var(--surface0);
+  border: 0;
+  color: var(--text);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 14px;
+  font: 500 13px/1 var(--font-body);
+  transition: background 0.12s ease;
 }
+.conv-frame-controls button:hover { background: var(--surface1); }
 
-.conv-frame-controls button:hover {
-  background: #45475a;
+#conv-btn-play {
+  background: var(--accent);
+  color: var(--crust);
+  font-weight: 600;
+  min-width: 36px;
 }
+#conv-btn-play:hover { background: var(--accent-d); }
 
-.conv-frame-controls input[type="range"] {
-  flex: 1;
-  accent-color: #89b4fa;
+.conv-loop-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--subtext);
+  margin-left: 4px;
+  cursor: pointer;
 }
 
 .conv-frame-controls span {
-  font-size: 12px;
-  color: #a6adc8;
+  font: 500 11.5px/1 var(--font-mono);
+  color: var(--subtext);
   white-space: nowrap;
   margin-left: auto;
 }
 
-.conv-controls-panel {
-  width: 380px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  border-left: 1px solid #313244;
-  background: #1e1e2e;
-  overflow: hidden;
-}
+/* ── Thumbnail strip ─────────────────────────────────── */
 
-.conv-toolbar {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 4px;
-}
-
-.conv-toolbar button {
-  flex: 1;
-  padding: 8px 4px;
-  background: #313244;
-  border: 1px solid #45475a;
-  color: #cdd6f4;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: background 0.15s;
-}
-
-.conv-toolbar button:hover:not(:disabled) {
-  background: #45475a;
-}
-
-.conv-toolbar button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.conv-toolbar button#conv-btn-export {
-  background: #89b4fa;
-  color: #1e1e2e;
-  font-weight: 600;
-}
-
-.conv-toolbar button#conv-btn-export:hover:not(:disabled) {
-  background: #74c7ec;
-}
-
-.conv-section {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 6px 0;
-  border-bottom: 1px solid #313244;
-}
-
-.conv-section:last-child {
-  border-bottom: none;
-}
-
-.conv-section > label {
-  font-size: 12px;
-  color: #a6adc8;
-  font-weight: 600;
-}
-
-.conv-section-title {
-  font-size: 12px;
-  color: #89b4fa;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.conv-section select,
-.conv-section input[type="text"],
-.conv-section input[type="number"] {
-  width: 100%;
-  padding: 5px 8px;
-  background: #313244;
-  border: 1px solid #45475a;
-  color: #cdd6f4;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-.conv-section input[type="range"] {
-  width: 100%;
-  accent-color: #89b4fa;
-}
-
-.conv-section input[type="checkbox"] {
-  accent-color: #89b4fa;
-}
-
-.conv-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.conv-row label {
-  font-size: 12px;
-  color: #a6adc8;
-  white-space: nowrap;
-  min-width: 50px;
-}
-
-.conv-row input[type="range"] {
-  flex: 1;
-}
-
-.conv-row input[type="number"] {
-  width: 70px !important;
-  flex: unset;
-}
-
-.conv-row select {
-  flex: 1;
-}
-
-.conv-camera-options,
-.conv-mosaic-options {
-  padding-left: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.conv-estimate-text {
-  font-size: 13px;
-  color: #a6e3a1;
-  padding: 6px 8px;
-  background: #1e1e2e;
-  border: 1px solid #313244;
-  border-radius: 4px;
-}
-
-.conv-progress-bar {
-  height: 6px;
-  background: #313244;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.conv-progress-fill {
-  height: 100%;
-  background: #89b4fa;
-  border-radius: 3px;
-  transition: width 0.2s;
-  width: 0%;
-}
-
-.conv-status {
-  font-size: 12px;
-  color: #a6adc8;
-  min-height: 16px;
-}
-
-/* ── Conversion button hierarchy ───────────────────── */
-
-.conv-toolbar button#conv-btn-open {
-  background: #89b4fa;
-  color: #1e1e2e;
-  font-weight: 600;
-}
-
-.conv-toolbar button#conv-btn-open:hover:not(:disabled) {
-  background: #74c7ec;
-}
-
-.conv-effect-buttons {
-  display: flex;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.conv-effect-buttons button {
-  flex: 1;
-}
-
-.btn-secondary {
-  padding: 6px 10px;
-  background: #313244;
-  border: 1px solid #45475a;
-  color: #cdd6f4;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 11px;
-  transition: background 0.15s;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: #45475a;
-}
-
-.btn-secondary:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.btn-danger {
-  padding: 6px 10px;
-  background: #45475a;
-  border: 1px solid #f38ba8;
-  color: #f38ba8;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 11px;
-  transition: background 0.15s;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: #f38ba8;
-  color: #1e1e2e;
-}
-
-.btn-danger:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* ── File info grid ────────────────────────────────── */
-
-.conv-info-grid {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 2px 10px;
-  font-size: 12px;
-}
-
-.conv-info-grid .info-label {
-  color: #6c7086;
-}
-
-.conv-info-grid .info-value {
-  color: #cdd6f4;
-}
-
-/* ── Unified top toolbar (B1+ design) ──────────────────── */
-
-.top-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: #1e1e2e;
-  border-bottom: 1px solid #313244;
-  flex-shrink: 0;
-}
-
-.top-toolbar button {
-  background: #313244;
-  color: #cdd6f4;
-  border: 1px solid #45475a;
-  border-radius: 5px;
-  padding: 6px 10px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.top-toolbar button:hover:not(:disabled) {
-  background: #45475a;
-}
-
-.top-toolbar button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.top-toolbar .top-filename {
-  color: #a6adc8;
-  font-size: 13px;
-  margin: 0 12px;
-  max-width: 360px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.top-toolbar .top-spacer { flex: 1; }
-
-.seg {
-  display: inline-flex;
-}
-
-.seg button {
-  border-radius: 0;
-  border-right: 0;
-}
-
-.seg button:first-child {
-  border-radius: 5px 0 0 5px;
-}
-
-.seg button:last-child {
-  border-radius: 0 5px 5px 0;
-  border-right: 1px solid #45475a;
-}
-
-.seg button.active {
-  background: #89b4fa;
-  color: #11111b;
-  border-color: #89b4fa;
-}
-
-/* ── Pill bar (right panel top, both tabs) ─────────────── */
-
-.pill-bar {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-  padding: 10px;
-  border-bottom: 1px solid #313244;
-  flex-shrink: 0;
-}
-
-.pill-btn {
-  background: #313244;
-  color: #cdd6f4;
-  border: 1px solid #45475a;
-  border-radius: 4px;
-  padding: 8px 6px;
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.pill-btn:hover:not(:disabled) {
-  background: #45475a;
-}
-
-.pill-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.pill-btn.active {
-  background: #89b4fa;
-  color: #11111b;
-  border-color: #89b4fa;
-}
-
-.pill-btn .icon {
-  font-size: 16px;
-  line-height: 1;
-}
-
-/* `pill-output` class kept for future use but no longer spans 2 columns;
-   it now sits in row 1 alongside other shared pills. */
-.pill-btn.pill-output { border-style: dashed; }
-
-/* Apply row at bottom of each tool pane */
-.apply-row {
-  display: flex;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.apply-row .btn-apply {
-  flex: 1;
-  margin-top: 0;
-}
-
-.apply-row .btn-apply.secondary {
-  background: #313244;
-  color: #cdd6f4;
-  border: 1px solid #45475a;
-  font-weight: 400;
-}
-
-.apply-row .btn-apply.secondary:hover:not(:disabled) {
-  background: #45475a;
-}
-
-/* Conv tool-content panes (mirrors .tool-content but for conv) */
-.conv-tool-content {
-  display: none;
-  padding: 16px;
-  flex-direction: column;
-  gap: 10px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.conv-tool-content.active {
-  display: flex;
-}
-
-.conv-tool-content .field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.conv-tool-content .field label {
-  color: #a6adc8;
-  font-size: 12px;
-}
-
-.conv-tool-content input[type="range"] { width: 100%; accent-color: #89b4fa; }
-
-.conv-tool-content input[type="text"],
-.conv-tool-content input[type="number"],
-.conv-tool-content select {
-  background: #313244;
-  border: 1px solid #45475a;
-  color: #cdd6f4;
-  border-radius: 4px;
-  padding: 5px 8px;
-  font-size: 13px;
-}
-
-.conv-tool-content select { cursor: pointer; }
-
-/* Image-tools save pane (re-uses .tool-content) — quality field visibility */
-#tool-save .field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-/* All top-toolbar buttons are present in both tabs so users find them
-   in the same place regardless of mode. The selection-mode toggle
-   only affects image-tools mouse handling, so toggling it in conv
-   mode is a harmless no-op. */
-
-/* Thumbnail timeline strip below the conversion-tab frame controls.
-   Horizontally scrollable row of mini-canvases drawn from state.frames. */
 .conv-thumb-strip {
   display: flex;
-  gap: 2px;
+  gap: 3px;
   overflow: hidden;
-  padding: 4px 8px;
-  background: #181825;
-  border-top: 1px solid #313244;
-  min-height: 56px;
+  padding: 8px 12px 12px;
+  background: transparent;
+  border-top: 1px solid var(--surface0);
+  min-height: 60px;
   flex-shrink: 0;
 }
 
@@ -929,15 +474,440 @@ body {
   width: 64px;
   height: 36px;
   flex-shrink: 0;
-  border-radius: 2px;
+  border-radius: 4px;
   cursor: pointer;
-  background: #11111b;
+  background: var(--crust);
   outline: 2px solid transparent;
   outline-offset: -2px;
-  transition: outline-color 0.08s;
+  transition: outline-color 0.1s ease, transform 0.1s ease;
 }
 
-.conv-thumb-strip canvas:hover { outline-color: #45475a; }
-.conv-thumb-strip canvas.active { outline-color: #89b4fa; }
+.conv-thumb-strip canvas:hover { outline-color: var(--surface2); }
+.conv-thumb-strip canvas.active {
+  outline-color: var(--accent);
+  transform: translateY(-1px);
+}
 
+/* ── Right panel: pill-bar (tool selector) ───────────── */
 
+.pill-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+  margin: 12px 12px 8px;
+  background: var(--surface0);
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+
+.pill-btn {
+  flex: 1 1 auto;
+  background: transparent;
+  color: var(--subtext);
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 8px;
+  cursor: pointer;
+  font: 500 12px/1 var(--font-body);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.pill-btn:hover:not(:disabled) { color: var(--text); }
+
+.pill-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.pill-btn.active {
+  background: var(--base);
+  color: var(--accent);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.pill-btn .icon {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.pill-btn.pill-output { /* legacy hook — visual unchanged */ }
+
+/* ── Tool content panes ──────────────────────────────── */
+
+.tool-content,
+.conv-tool-content {
+  display: none;
+  padding: 4px 16px 16px;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.tool-content.active,
+.conv-tool-content.active { display: flex; }
+
+/* shared field block */
+.tool-content .field,
+.conv-tool-content .field,
+.conv-section .field {
+  background: var(--surface0);
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tool-content label,
+.conv-tool-content label,
+.conv-section > label,
+.form-row label,
+.conv-row label {
+  font-size: 12px;
+  color: var(--subtext);
+  font-weight: 500;
+}
+
+/* range slider */
+.tool-content input[type="range"],
+.conv-tool-content input[type="range"],
+.conv-section input[type="range"],
+.conv-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  height: 4px;
+}
+
+/* text inputs / numbers / selects */
+.tool-content input[type="text"],
+.tool-content input[type="number"],
+.tool-content select,
+.conv-tool-content input[type="text"],
+.conv-tool-content input[type="number"],
+.conv-tool-content select,
+.conv-section input[type="text"],
+.conv-section input[type="number"],
+.conv-section select {
+  width: 100%;
+  padding: 8px 11px;
+  background: var(--surface0);
+  border: 1px solid transparent;
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  font: 400 12.5px/1.2 var(--font-body);
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.tool-content input[type="text"]:focus,
+.tool-content input[type="number"]:focus,
+.tool-content select:focus,
+.conv-tool-content input[type="text"]:focus,
+.conv-tool-content input[type="number"]:focus,
+.conv-tool-content select:focus,
+.conv-section input[type="text"]:focus,
+.conv-section input[type="number"]:focus,
+.conv-section select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--crust);
+}
+
+/* nested fields-inside-field shouldn't get the bg pill */
+.field input[type="text"],
+.field input[type="number"],
+.field select { background: var(--crust); }
+
+.tool-content select,
+.conv-tool-content select,
+.conv-section select { cursor: pointer; }
+
+.tool-content input[type="color"] {
+  width: 40px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--surface1);
+  border-radius: var(--radius-sm);
+  background: var(--surface0);
+  cursor: pointer;
+}
+
+.tool-content input[type="checkbox"],
+.conv-tool-content input[type="checkbox"],
+.conv-section input[type="checkbox"],
+.conv-loop-toggle input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 14px;
+  height: 14px;
+}
+
+.form-row,
+.conv-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-row label,
+.conv-row label {
+  white-space: nowrap;
+}
+
+.form-row input[type="range"],
+.conv-row input[type="range"] { flex: 1; }
+
+.conv-row input[type="number"] { width: 70px !important; flex: unset; }
+.conv-row select { flex: 1; }
+
+.preview-row {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+}
+
+.preview-row canvas {
+  border: 1px solid var(--surface1);
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+
+/* hint paragraph (mosaic conv tab etc) */
+.hint-text {
+  font-size: 12.5px;
+  color: var(--subtext);
+  line-height: 1.5;
+  margin: 0;
+  padding: 10px 14px;
+  background: rgba(245, 184, 209, 0.06);
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--accent2);
+}
+
+/* ── Apply / primary buttons ─────────────────────────── */
+
+.btn-apply {
+  padding: 11px 16px;
+  background: var(--accent);
+  color: var(--crust);
+  border: 0;
+  border-radius: var(--radius-md);
+  font: 600 13px/1 var(--font-body);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: background 0.12s ease;
+  margin-top: 2px;
+}
+.btn-apply:hover:not(:disabled) { background: var(--accent-d); }
+.btn-apply:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-apply .i { width: 14px; height: 14px; flex-shrink: 0; }
+
+.btn-apply.secondary {
+  background: var(--surface0);
+  color: var(--text);
+  font-weight: 500;
+}
+.btn-apply.secondary:hover:not(:disabled) { background: var(--surface1); }
+
+.apply-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.apply-row .btn-apply { flex: 1; margin-top: 0; }
+
+/* ── Text layer list (image tools) ───────────────────── */
+
+.text-layer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.text-layer-header {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.text-layer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.text-layer-item {
+  display: flex;
+  align-items: center;
+  padding: 7px 10px;
+  background: var(--surface0);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.1s ease, border-color 0.1s ease;
+}
+.text-layer-item:hover { background: var(--surface1); }
+.text-layer-item.selected {
+  border-color: var(--accent);
+  background: var(--surface1);
+}
+
+.text-layer-preview {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.text-layer-delete {
+  background: transparent;
+  border: 0;
+  color: var(--red);
+  cursor: pointer;
+  font-size: 17px;
+  padding: 0 4px;
+  line-height: 1;
+}
+.text-layer-delete:hover { color: var(--accent2); }
+
+/* ── Conversion sections / file info / progress ─────── */
+
+.conv-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.conv-section-title {
+  font-size: 10.5px;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.conv-file-info {
+  background: var(--surface0);
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+}
+
+.conv-info-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  font: 400 12px/1.4 var(--font-mono);
+}
+.conv-info-grid .info-label { color: var(--dim); }
+.conv-info-grid .info-value { color: var(--text); }
+
+.conv-estimate-text {
+  font-size: 12.5px;
+  color: var(--green);
+  padding: 10px 14px;
+  background: rgba(166, 227, 161, 0.07);
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--green);
+  font-weight: 500;
+}
+
+.conv-progress-bar {
+  height: 6px;
+  background: var(--surface0);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.conv-loading-overlay .conv-progress-bar {
+  height: 8px;
+  background: var(--surface1);
+  border-radius: 4px;
+}
+
+.conv-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.2s ease;
+  width: 0%;
+}
+
+.conv-status {
+  font-size: 12px;
+  color: var(--subtext);
+  min-height: 16px;
+}
+
+.conv-ugoira-hint {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--subtext);
+  padding: 10px 12px;
+  background: rgba(255, 212, 154, 0.06);
+  border-left: 2px solid var(--warn);
+  border-radius: var(--radius-sm);
+  opacity: 1 !important;
+}
+
+/* ── Secondary / danger buttons (used in conv) ──────── */
+
+.btn-secondary {
+  padding: 7px 12px;
+  background: var(--surface0);
+  border: 0;
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font: 500 11.5px/1 var(--font-body);
+  transition: background 0.12s ease;
+}
+.btn-secondary:hover:not(:disabled) { background: var(--surface1); }
+.btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-danger {
+  padding: 7px 12px;
+  background: transparent;
+  border: 1px solid var(--red);
+  color: var(--red);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font: 500 11.5px/1 var(--font-body);
+  transition: background 0.12s ease;
+}
+.btn-danger:hover:not(:disabled) { background: var(--red); color: var(--crust); }
+.btn-danger:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Scrollbars (webview only) ──────────────────────── */
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--surface1);
+  border-radius: 5px;
+  border: 2px solid var(--mantle);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--surface2); }
+
+/* ── Focus visibility for keyboard nav ──────────────── */
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

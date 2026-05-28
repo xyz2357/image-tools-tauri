@@ -363,7 +363,10 @@ async function loadFromPath(path) {
     const baseName = path.split(/[/\\]/).pop();
     setStatus(`已加载 ${state.frames.length} 帧，来自 ${baseName}`);
     const el = document.getElementById("top-filename");
-    if (el) el.textContent = baseName;
+    if (el) {
+      (el.querySelector(".label") || el).textContent = baseName;
+      el.classList.add("loaded");
+    }
   } catch (e) {
     showLoading(false);
     setStatus(`加载失败: ${e}`);
@@ -414,7 +417,10 @@ async function loadFromFile(file) {
     onFramesLoaded();
     setStatus(`已加载 ${state.frames.length} 帧，来自 ${file.name}`);
     const elT = document.getElementById("top-filename");
-    if (elT) elT.textContent = file.name;
+    if (elT) {
+      (elT.querySelector(".label") || elT).textContent = file.name;
+      elT.classList.add("loaded");
+    }
   } catch (e) {
     showLoading(false);
     setStatus(`加载失败: ${e}`);

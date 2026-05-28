@@ -2,6 +2,10 @@
 
 一个基于 Tauri v2 + 原生 HTML/CSS/JS 的桌面图片处理工具，是 [image_tools](https://github.com/xyz2357/image_tools)（Python 版本）的重写。
 
+## 界面
+
+<img src="docs/samples/ui.jpg" alt="界面截图" width="900" />
+
 ## 效果示例
 
 ### 图片

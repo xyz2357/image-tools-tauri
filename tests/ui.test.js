@@ -301,12 +301,12 @@ describe("undo/redo buttons", () => {
     expect(document.getElementById("btn-redo").title).toContain("Ctrl+Shift+Z");
   });
 
-  it("undo button shows Chinese label", () => {
-    expect(document.getElementById("btn-undo").textContent).toContain("撤销");
+  it("undo button has Chinese label in title", () => {
+    expect(document.getElementById("btn-undo").title).toContain("撤销");
   });
 
-  it("redo button shows Chinese label", () => {
-    expect(document.getElementById("btn-redo").textContent).toContain("重做");
+  it("redo button has Chinese label in title", () => {
+    expect(document.getElementById("btn-redo").title).toContain("重做");
   });
 });
 

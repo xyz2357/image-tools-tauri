@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<title>Variant D · Minimal</title>
+<style>
+  :root {
+    --crust: #0c0c10; --base: #131319; --mantle: #0f0f15; --panel: #161620;
+    --surface0: #1d1d28; --surface1: #292936; --line: #1a1a24;
+    --text: #e8e8ed; --subtext: #7c8195; --dim: #4a4f60;
+    --accent: #f5d76e;  /* understated gold */
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--crust); color: var(--text);
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif; font-size: 13px; overflow: hidden;
+    font-weight: 400; }
+  .app { display: grid; grid-template-columns: 1fr 280px; grid-template-rows: 44px 1fr; height: 100vh; }
+
+  /* slim top */
+  .top { grid-column: 1 / -1; background: var(--mantle); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; padding: 0 28px; gap: 0; }
+  .top .brand { font-family: "Fraunces", "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: 17px;
+    letter-spacing: -0.01em; }
+  .top .brand .dot { color: var(--accent); }
+  .top .file { margin-left: 22px; padding-left: 22px; border-left: 1px solid var(--line); font-size: 12px; color: var(--subtext); font-family: "JetBrains Mono", monospace; letter-spacing: 0.02em; }
+  .top .file b { color: var(--text); font-weight: 500; }
+
+  .top .tools { margin-left: auto; display: flex; gap: 2px; }
+  .top .tool { width: 36px; height: 28px; display: grid; place-items: center; border-radius: 4px; color: var(--subtext); cursor: default; }
+  .top .tool:hover { background: var(--surface0); color: var(--text); }
+  .top .tool.on { color: var(--accent); }
+  .top .tool svg { width: 16px; height: 16px; }
+  .top .sep { width: 1px; height: 18px; background: var(--line); margin: 0 10px; align-self: center; }
+  .top .mode { display: flex; align-items: center; gap: 14px; margin-left: 22px; padding-left: 22px; border-left: 1px solid var(--line); }
+  .top .mode .m { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--dim); }
+  .top .mode .m.on { color: var(--accent); }
+
+  /* canvas */
+  .canvas-area { background: var(--crust); display: flex; flex-direction: column; min-height: 0; position: relative; overflow: hidden; }
+  .canvas-area::before { content: ""; position: absolute; inset: 0; background:
+    radial-gradient(ellipse 800px 600px at 30% 20%, rgba(245,215,110,0.04), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 80% 80%, rgba(120,140,255,0.03), transparent 60%);
+    pointer-events: none; }
+  .canvas-wrap { flex: 1; display: grid; place-items: center; padding: 56px 64px 96px; min-height: 0; position: relative; }
+  .canvas { position: relative; box-shadow: 0 30px 80px rgba(0,0,0,.55); max-width: 100%; max-height: 100%; }
+  .canvas img { display: block; max-width: 100%; max-height: calc(100vh - 44px - 56px - 96px); }
+  .canvas .meta { position: absolute; left: 0; bottom: -28px; font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: var(--dim); letter-spacing: 0.04em; }
+  .canvas .frame-num { position: absolute; right: 0; bottom: -28px; font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: var(--dim); letter-spacing: 0.04em; }
+
+  /* floating scrubber */
+  .scrub { position: absolute; left: 64px; right: 64px; bottom: 28px; display: flex; align-items: center; gap: 18px;
+    background: rgba(15,15,21,0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.04);
+    padding: 10px 18px; border-radius: 999px; box-shadow: 0 14px 40px rgba(0,0,0,.4); }
+  .scrub .play { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--crust);
+    display: grid; place-items: center; font-size: 11px; }
+  .scrub .time { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--text); letter-spacing: 0.02em; }
+  .scrub .bar { flex: 1; height: 3px; background: var(--surface0); border-radius: 2px; position: relative; }
+  .scrub .bar .pl { position: absolute; left: 0; top: 0; bottom: 0; width: 26%; background: var(--accent); border-radius: 2px; }
+  .scrub .bar .head { position: absolute; left: 26%; top: -5px; width: 2px; height: 13px; background: var(--text); border-radius: 1px; }
+  .scrub .bar .marks { position: absolute; top: -2px; left: 19%; right: 59%; height: 7px; background: rgba(245,215,110,0.18); border-radius: 2px; border-top: 1px dashed var(--accent); }
+  .scrub .right { display: flex; gap: 14px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--subtext); }
+  .scrub .loop { color: var(--accent); }
+
+  /* right panel — auto-switching */
+  .panel { background: var(--mantle); border-left: 1px solid var(--line); display: flex; flex-direction: column;
+    min-height: 0; padding: 36px 28px; gap: 0; }
+  .pheader { margin-bottom: 28px; }
+  .pheader .eyebrow { font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim); font-family: "JetBrains Mono", monospace; }
+  .pheader h2 { font-family: "Fraunces", Georgia, serif; font-weight: 400; font-size: 28px; margin: 6px 0 0; letter-spacing: -0.02em; line-height: 1; }
+  .pheader h2 i { font-style: italic; color: var(--accent); }
+
+  .section { margin-bottom: 28px; }
+  .section .lbl { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; margin-bottom: 12px; }
+  .section .lbl .name { color: var(--subtext); }
+  .section .lbl .val { font-family: "JetBrains Mono", monospace; color: var(--text); font-size: 13px; }
+
+  .slider { height: 18px; position: relative; }
+  .slider .track { position: absolute; left: 0; right: 0; top: 8px; height: 1px; background: var(--surface1); }
+  .slider .fill { position: absolute; top: 7px; left: 0; height: 3px; background: var(--accent); }
+  .slider .knob { position: absolute; top: 4px; width: 10px; height: 10px; background: var(--text); border-radius: 50%;
+    transform: translateX(-50%); }
+
+  .pick { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .pick span { padding: 6px 10px; font-size: 11px; color: var(--subtext); border: 1px solid var(--surface1); border-radius: 3px; }
+  .pick span.on { color: var(--accent); border-color: var(--accent); }
+
+  .meta-line { display: flex; justify-content: space-between; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--subtext);
+    padding: 10px 0; border-top: 1px solid var(--line); }
+  .meta-line:last-of-type { border-bottom: 1px solid var(--line); }
+  .meta-line .v { color: var(--text); }
+
+  .export { margin-top: auto; }
+  .export .est { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--dim); margin-bottom: 12px; display: flex; justify-content: space-between; }
+  .export .est .v { color: var(--text); }
+  .export button { width: 100%; background: var(--accent); border: 0; color: var(--crust); padding: 14px;
+    font-family: "Fraunces", Georgia, serif; font-size: 15px; font-style: italic; letter-spacing: 0.02em; border-radius: 4px; }
+
+  .footnote { font-family: "JetBrains Mono", monospace; font-size: 9px; letter-spacing: 0.12em; color: var(--dim);
+    text-align: center; margin-top: 14px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand">image tools<span class="dot">.</span></div>
+    <div class="file">▸ <b>sample.mp4</b> · 1920×1080 · 24fps</div>
+
+    <div class="tools">
+      <div class="tool" title="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h7l2 2h9v9H3z"/></svg></div>
+      <div class="tool" title="save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h11l3 3v13H5z"/></svg></div>
+      <div class="sep"></div>
+      <div class="tool" title="undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 14l-5-5 5-5M4 9h11a5 5 0 015 5v6"/></svg></div>
+      <div class="tool" title="redo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 14l5-5-5-5M20 9H9a5 5 0 00-5 5v6"/></svg></div>
+      <div class="sep"></div>
+      <div class="tool on" title="mosaic"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="6" height="6"/><rect x="11" y="3" width="6" height="6" opacity=".5"/><rect x="3" y="11" width="6" height="6" opacity=".5"/><rect x="11" y="11" width="6" height="6"/></svg></div>
+      <div class="tool" title="blur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6" opacity=".5"/></svg></div>
+      <div class="tool" title="text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 6h14M12 6v13"/></svg></div>
+      <div class="tool" title="camera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="12.5" r="3.5"/></svg></div>
+    </div>
+
+    <div class="mode">
+      <span class="m">IMG</span>
+      <span class="m on">VID</span>
+    </div>
+  </div>
+
+  <main class="canvas-area">
+    <div class="canvas-wrap">
+      <div class="canvas">
+        <img src="../docs/samples/vid-mosaic.jpg" alt="" />
+        <div class="meta">mosaic · block 40px · selection</div>
+        <div class="frame-num">050 / 192</div>
+      </div>
+    </div>
+
+    <div class="scrub">
+      <div class="play">▶</div>
+      <span class="time">00:00:02.083</span>
+      <div class="bar"><div class="marks"></div><div class="pl"></div><div class="head"></div></div>
+      <div class="right"><span class="loop">↻ loop</span><span>24 fps</span></div>
+    </div>
+  </main>
+
+  <aside class="panel">
+    <div class="pheader">
+      <div class="eyebrow">EDITING · MOSAIC</div>
+      <h2>Block <i>size</i></h2>
+    </div>
+
+    <div class="section">
+      <div class="lbl"><span class="name">Pixel block</span><span class="val">40 <span style="color:var(--dim)">px</span></span></div>
+      <div class="slider"><div class="track"></div><div class="fill" style="width:42%"></div><div class="knob" style="left:42%"></div></div>
+    </div>
+
+    <div class="section">
+      <div class="lbl"><span class="name">Apply to</span></div>
+      <div class="pick">
+        <span>Current frame</span>
+        <span class="on">Selected range</span>
+        <span>All frames</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="lbl"><span class="name">Selection</span></div>
+      <div class="pick">
+        <span class="on">Rectangle</span>
+        <span>Lasso</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="meta-line"><span>Range</span><span class="v">01.50 → 03.20</span></div>
+      <div class="meta-line"><span>Frames</span><span class="v">41 selected</span></div>
+      <div class="meta-line"><span>Region</span><span class="v">980 × 540</span></div>
+    </div>
+
+    <div class="export">
+      <div class="est"><span>Estimated output</span><span class="v">4.2 MB · MP4</span></div>
+      <button>Export</button>
+      <div class="footnote">⌘ E  ·  EXPORT</div>
+    </div>
+  </aside>
+</div>
+</body>
+</html>

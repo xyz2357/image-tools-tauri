@@ -270,7 +270,9 @@ function resetImage() {
 function updateTopFilename() {
   const el = document.getElementById("top-filename");
   if (!el) return;
-  el.textContent = state.sourceFileName || "未加载文件";
+  const label = el.querySelector(".label") || el;
+  label.textContent = state.sourceFileName || "未加载文件";
+  el.classList.toggle("loaded", !!state.sourceFileName);
 }
 
 // ── Selection mask helper ───────────────────────────────────────────────────
